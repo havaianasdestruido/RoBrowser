@@ -1,44 +1,43 @@
 --!strict
 --[[
-  Updated client entry point – fetches HTML, parses it, and renders
-  the DOM using the BrowserEngine we just added.
-  Default homepage is set to Wikipedia's main page.
+  Updated client entry point – fetches HTML via a server RemoteFunction, parses it, and renders
+  the DOM using the BrowserEngine. Default homepage is Wikipedia.
 ]]
 
-local HttpService = game:GetService("HttpService")
-local HTMLParser = game:GetService("ReplicatedStorage").Shared.HTMLParser
-	--require(script:FindFirstChild("../shared/HTMLParser.luau"))
-local BrowserEngine = require(script.BrowserEngine)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Simple helper to fetch a page. In a real app you’d add error handling,
--- caching, and user‑provided URLs.
-local function fetchHtml(url)
-    local success, result = pcall(function()
-        return HttpService:GetAsync(url)
-    end)
-    if success then
+-- Require modules from ReplicatedStorage.Shared (Rojo maps src/shared here)
+local HTMLParser = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HTMLParser"))
+local BrowserEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BrowserEngine"))
+
+-- RemoteFunction that the server provides for HTTP requests
+local fetchHTML = ReplicatedStorage:WaitForChild("FetchHTML")
+
+local function getHtml(url)
+    local result = fetchHTML:InvokeServer(url)
+    if result then
         return result
     else
-        warn("Failed to fetch URL:", url, "error:", result)
-        return "Failed to fetch URL:", url, "error:", result--"\u003cp\u003eFailed to load page.\u003c/p\u003e"
+        warn("Failed to fetch URL via server:", url)
+        return "<p>Failed to load page.</p>"
     end
 end
 
--- Main function – called when the client script runs.
 local function init()
     -- Create a ScreenGui to hold the rendered page.
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "BrowserScreen"
     screenGui.ResetOnSpawn = false
-    screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Wikipedia main page as default homepage.
     local url = "https://en.wikipedia.org/wiki/Main_Page"
-    local html = fetchHtml(url)
+    local html = getHtml(url)
     local dom = HTMLParser.parse(html)
     BrowserEngine.render(dom, screenGui)
 end
 
 init()
+
 
 
