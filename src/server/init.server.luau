@@ -1,4 +1,6 @@
 --!strict
+--!optimize 2
+--!native
 --[[
   Server script that provides a RemoteFunction for fetching HTML
   using HttpService. Clients invoke this to bypass the client‑side HTTP

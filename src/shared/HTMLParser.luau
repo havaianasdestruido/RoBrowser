@@ -1,18 +1,14 @@
 --!strict
---[[
-  Simple HTML parser for Roblox Luau.
-  Parses a subset of HTML into a lightweight DOM structure.
-  Node types: ElementNode, TextNode.
-  Usage:
-    local parser = require(script.HTMLParser)
-    local dom = parser.parse(htmlString)
-    -- dom is the root ElementNode representing the document body.
-]]
+--!optimize 2
+--!native
+-- Simple HTML parser for Roblox Luau
+-- Parses a subset of HTML into a lightweight DOM structure
+-- Node types: ElementNode, TextNode
 
 local HTMLParser = {}
 
 -- Node constructors
-local function ElementNode(tag: string, attrs: {[string]: string}?)
+local function ElementNode(tag, attrs)
     return {
         type = "element",
         tag = tag,
@@ -21,7 +17,7 @@ local function ElementNode(tag: string, attrs: {[string]: string}?)
     }
 end
 
-local function TextNode(text: string)
+local function TextNode(text)
     return {
         type = "text",
         text = text,
@@ -29,28 +25,31 @@ local function TextNode(text: string)
 end
 
 -- Helper to trim whitespace
-local function trim(s: string): string
+local function trim(s)
     return string.match(s, "^%s*(.-)%s*$")
 end
 
 -- Simple attribute parser: converts key="value" pairs into a table
-local function parseAttributes(attrString: string): {[string]: string}
+local function parseAttributes(attrString)
     local attrs = {}
-    for key, value in string.gmatch(attrString, "(%w+)%s*=%s*\"(.-)\"") do
+    local pattern = '(%w+)%s*=%s*"(.-)"'
+    for key, value in string.gmatch(attrString, pattern) do
         attrs[key] = value
     end
     return attrs
 end
 
 -- Tokeniser
-local function tokenize(html: string): {{type: string, content: string}}
+local function tokenize(html)
     local tokens = {}
     local pos = 1
     local htmlLength = #html
+    local lt = string.byte("<")
+    local gt = string.byte(">")
 
     while pos <= htmlLength do
-        local char = string.sub(html, pos, pos)
-        if char == "<" then
+        local charCode = string.byte(html, pos, pos)
+        if charCode == lt then
             -- find end of tag
             local close = string.find(html, ">", pos)
             if not close then
@@ -71,7 +70,7 @@ local function tokenize(html: string): {{type: string, content: string}}
 end
 
 -- Parser
-function HTMLParser.parse(html: string)
+function HTMLParser.parse(html)
     local tokens = tokenize(html)
     local stack = {}
     local root = ElementNode("body")

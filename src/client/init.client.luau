@@ -1,4 +1,6 @@
 --!strict
+--!optimize 2
+--!native
 --[[
   Updated client entry point – fetches HTML via a server RemoteFunction, parses it, and renders
   the DOM using the BrowserEngine. Default homepage is Wikipedia.

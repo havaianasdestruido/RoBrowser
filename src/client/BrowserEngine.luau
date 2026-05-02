@@ -1,4 +1,6 @@
 --!strict
+--!optimize 2
+--!native
 --[[
   BrowserEngine – renders a lightweight DOM (produced by HTMLParser) into
   Roblox GUI objects (Frame, TextLabel, ImageLabel, etc.).
