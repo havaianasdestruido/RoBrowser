@@ -109,6 +109,20 @@ local function isSelfClosing(tagName)
 	return selfClosingTags[tagName] == true
 end
 
+-- Extract text content from a node and its children
+local function extractText(node)
+	if node.type == "text" then
+		return node.text
+	elseif node.type == "element" then
+		local text = ""
+		for _, child in ipairs(node.children or {}) do
+			text = text .. extractText(child)
+		end
+		return text
+	end
+	return ""
+end
+
 -- Parser: converts tokens into a DOM tree
 function HTMLParser.parse(html)
 	local tokens = tokenize(html)
@@ -116,14 +130,87 @@ function HTMLParser.parse(html)
 	local root = ElementNode("html") -- Root node
 	table.insert(stack, root)
 
+	-- Collect CSS from style tags
+	local cssBlocks = {}
+
 	for _, token in ipairs(tokens) do
 		if token.type == "text" then
 			local trimmed = trim(token.content)
-			if #trimmed > 0 then
+			if #trimmed >0 then
 				local parent = stack[#stack]
 				if parent then
 					table.insert(parent.children, TextNode(trimmed))
 				end
+			end
+		elseif token.type == "tag" then
+			local content = token.content
+
+			-- Check if it's a closing tag
+			if string.sub(content, 1, 1) == "/" then
+				local closingTag = string.match(string.sub(content, 2), "^%s*(%w+)")
+				if closingTag then
+					-- Special handling for style tags - extract CSS
+					if closingTag == "style" and stack[#stack] and stack[#stack].tag == "style" then
+						local styleNode = stack[#stack]
+						local cssText = extractText(styleNode)
+						if cssText and cssText ~= "" then
+							table.insert(cssBlocks, cssText)
+						end
+					end
+
+					-- Pop stack until we find matching opening tag
+					while #stack > 1 do
+						local top = stack[#stack]
+						if top.tag == closingTag then
+							table.remove(stack)
+							break
+						else
+							table.remove(stack)
+						end
+					end
+				end
+			else
+				-- Opening tag
+				local isSelfClosingTag = string.sub(content, -1) == "/"
+				if isSelfClosingTag then
+					content = string.sub(content, 1, -2)
+				end
+
+				-- Extract tag name and attributes
+				local parts = {}
+				for part in string.gmatch(content, "[^%s]+") do
+					table.insert(parts, part)
+				end
+
+				local tagName = parts[1]
+				local attrString = string.sub(content, #tagName + 1)
+				local attrs = parseAttributes(attrString)
+
+				-- Create node
+				local node = ElementNode(tagName, attrs)
+				local parent = stack[#stack]
+
+				if parent then
+					table.insert(parent.children, node)
+				else
+					table.insert(root.children, node)
+				end
+
+				-- Push to stack if not self-closing
+				if not isSelfClosingTag and not isSelfClosing(tagName) then
+					table.insert(stack, node)
+				end
+			end
+		end
+	end
+
+	-- Attach collected CSS to root node
+	if #cssBlocks > 0 then
+		root.css = table.concat(cssBlocks, "\n")
+	end
+
+	return root
+end
 			end
 		elseif token.type == "tag" then
 			local content = token.content
