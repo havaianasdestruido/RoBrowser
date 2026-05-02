@@ -1,0 +1,14 @@
+# StyLua configuration for Roblox Luau
+column_width = 120
+indent_type = "Tabs"
+indent_width = 4
+quote_style = "AutoPreferDouble"
+call_parentheses = "Always"
+collapse_simple_statement = "Never"
+sort_requires = "None"
+space_before_call_parentheses = false
+space_inside_parentheses = false
+space_inside_brackets = false
+space_before_square_bracket = false
+format_expression = true
+check = false

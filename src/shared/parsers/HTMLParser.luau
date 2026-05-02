@@ -53,7 +53,6 @@ local function tokenize(html)
 	local pos = 1
 	local htmlLength = #html
 	local lt = string.byte("<")
-	local gt = string.byte(">")
 
 	while pos <= htmlLength do
 		local charCode = string.byte(html, pos, pos)

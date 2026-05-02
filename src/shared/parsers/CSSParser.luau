@@ -85,9 +85,9 @@ function CSSParser.matchElement(element, styleMap)
 	end
 
 	-- Class selector (e.g., ".myclass")
-	local className = element.attrs.class
-	if className then
-		for className in className:gmatch("%S+") do
+	local classAttr = element.attrs.class
+	if classAttr then
+		for className in classAttr:gmatch("%S+") do
 			local classStyles = styleMap["." .. className]
 			if classStyles then
 				for prop, value in pairs(classStyles) do

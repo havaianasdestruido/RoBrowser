@@ -1,0 +1,24 @@
+# Selene linter configuration for Roblox Luau
+# https://kampfkarren.github.io/selene/
+
+[config]
+# Use Roblox standard library
+std = "roblox"
+
+[lints]
+# Style warnings
+synthetic_semicolon = "warn"
+incorrect_standard_library = "warn"
+
+# Code quality
+shadowing = "warn"
+unused_variable = "warn"
+unused_function = "warn"
+unused_parameter = "allow"  # Too strict for Roblox callbacks
+
+# General
+deprecated_function = "warn"
+
+# Disable rules that don't apply to Luau
+global_usage = "allow"
+shebang = "allow"
