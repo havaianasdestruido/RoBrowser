@@ -6,7 +6,8 @@
   Roblox GUI objects (Frame, TextLabel, ImageLabel, etc.).
   Supports a wide range of HTML tags (see utils/html_tags.txt).
   Tags are grouped into block elements, inline text elements, and media.
-  Includes navigation bar, scrolling, link handling, loading states, and CSS support.
+  Includes navigation bar, scrolling, link handling, loading states, CSS support,
+  and form handling.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +19,9 @@ local CSSParser = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild(
 
 -- Navigation callback (set by client)
 BrowserEngine.onNavigate = nil
+
+-- Form submission callback
+BrowserEngine.onFormSubmit = nil
 
 -- Store parsed CSS for current page
 local currentCSS = {}
@@ -124,6 +128,10 @@ local function creatorForTag(tag)
 	elseif inlineSet[tag] then
 		if tag == "a" then
 			return function() return Instance.new("TextButton") end
+		elseif tag == "input" then
+			return function() return Instance.new("TextBox") end
+		elseif tag == "button" then
+			return function() return Instance.new("TextButton") end
 		else
 			return function() return Instance.new("TextLabel") end
 		end
@@ -170,40 +178,75 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 
 		-- Set defaults based on tag
 		local height = 24
-		if inst:IsA("TextLabel") or inst:IsA("TextButton") then
-			local text = node.attrs.title or node.attrs.alt or ""
+		if inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+			local text = node.attrs.title or node.attrs.alt or node.attrs.value or node.attrs.placeholder or ""
+			-- Collect text from children
 			for _, child in ipairs(node.children or {}) do
 				if child.type == "text" then
 					text = text .. child.text
 				end
 			end
-			inst.Text = text
-			inst.TextWrapped = true
-			inst.Size = UDim2.new(1, -20, 0, calculateTextHeight(text, inst.TextSize, maxWidth or 600))
-			inst.BackgroundTransparency = 0.7
-			inst.TextXAlignment = Enum.TextXAlignment.Left
-			inst.Position = UDim2.new(0, 10, 0, yOffset)
-			inst.Font = Enum.Font.SourceSans
 
-			-- Handle links
-			if node.tag == "a" and node.attrs.href then
-				inst.BackgroundTransparency = 1
-				inst.TextColor3 = Color3.fromRGB(0, 102, 204)
-				inst.MouseEnter:Connect(function()
-					inst.TextColor3 = Color3.fromRGB(204, 0, 0)
-					inst.Font = Enum.Font.SourceSansUnderline
-				end)
-				inst.MouseLeave:Connect(function()
-					inst.TextColor3 = Color3.fromRGB(0, 102, 204)
-					inst.Font = Enum.Font.SourceSans
-				end)
+			-- Handle different input types
+			if node.tag == "input" then
+				if inst:IsA("TextBox") then
+					inst.PlaceholderText = node.attrs.placeholder or ""
+					inst.Text = node.attrs.value or ""
+					inst.Size = UDim2.new(1, -20, 0, 30)
+					inst.BackgroundTransparency = 0
+					inst.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+					inst.BorderSizePixel = 1
+					inst.Position = UDim2.new(0, 10, 0, yOffset)
+					height = 30
+				end
+			elseif node.tag == "button" then
+				inst.Text = text
+				inst.Size = UDim2.new(0, math.max(100, #text * 8 + 20), 0, 32)
+				inst.BackgroundTransparency = 0
+				inst.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+				inst.Position = UDim2.new(0, 10, 0, yOffset)
+				inst.Font = Enum.Font.SourceSans
+				inst.TextSize = 14
+				height = 32
+
+				-- Handle button clicks (form submission, etc.)
 				inst.MouseButton1Click:Connect(function()
-					if BrowserEngine.onNavigate then
-						BrowserEngine.onNavigate(node.attrs.href)
+					if node.attrs.onclick then
+						-- Execute inline onclick (basic eval)
+						warn("Inline onclick not supported:", node.attrs.onclick)
 					end
 				end)
+			else
+				-- Regular text element
+				inst.Text = text
+				inst.TextWrapped = true
+				inst.Size = UDim2.new(1, -20, 0, calculateTextHeight(text, inst.TextSize, maxWidth or 600))
+				inst.BackgroundTransparency = 0.7
+				inst.TextXAlignment = Enum.TextXAlignment.Left
+				inst.Position = UDim2.new(0, 10, 0, yOffset)
+				inst.Font = Enum.Font.SourceSans
+
+				-- Handle links
+				if node.tag == "a" and node.attrs.href then
+					inst.BackgroundTransparency = 1
+					inst.TextColor3 = Color3.fromRGB(0, 102, 204)
+					inst.Font = Enum.Font.SourceSans
+					inst.MouseEnter:Connect(function()
+						inst.TextColor3 = Color3.fromRGB(204, 0, 0)
+						inst.Font = Enum.Font.SourceSansUnderline
+					end)
+					inst.MouseLeave:Connect(function()
+						inst.TextColor3 = Color3.fromRGB(0, 102, 204)
+						inst.Font = Enum.Font.SourceSans
+					end)
+					inst.MouseButton1Click:Connect(function()
+						if BrowserEngine.onNavigate then
+							BrowserEngine.onNavigate(node.attrs.href)
+						end
+					end)
+				end
+				height = inst.Size.Y.Offset
 			end
-			height = inst.Size.Y.Offset
 		elseif inst:IsA("ImageLabel") then
 			local src = node.attrs.src or ""
 			if src ~= "" then
@@ -215,10 +258,12 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 			inst.ScaleType = Enum.ScaleType.Fit
 			height = 200
 		else
+			-- Block elements
 			inst.Size = UDim2.new(1, -20, 0, 30)
 			inst.Position = UDim2.new(0, 10, 0, yOffset)
 			inst.BackgroundTransparency = 1
 
+			-- Special handling for headings
 			if node.tag == "h1" then
 				inst.Size = UDim2.new(1, -20, 0, 40)
 				height = 40
@@ -233,6 +278,12 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 				inst.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
 				inst.BackgroundTransparency = 0
 				height = 2
+			elseif node.tag == "form" then
+				inst.Size = UDim2.new(1, -20, 0, 100)
+				inst.BackgroundTransparency = 0.9
+				inst.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+				inst.BorderSizePixel = 1
+				height = 100
 			end
 		end
 
@@ -243,6 +294,11 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		for _, child in ipairs(node.children or {}) do
 			local _, childHeight = renderNode(child, inst, childYOffset, maxWidth, cssMap)
 			childYOffset = childYOffset + (childHeight or 0)
+		end
+
+		-- Update parent height for containers
+		if inst:IsA("Frame") and not inst:IsA("ScrollingFrame") then
+			inst.Size = UDim2.new(inst.Size.X.Scale, inst.Size.X.Offset, 0, childYOffset + 10)
 		end
 
 		return inst, height
@@ -260,6 +316,7 @@ local function createNavigationBar(parent, onNavigate)
 	navBar.BorderSizePixel = 1
 	navBar.Parent = parent
 
+	-- Back button
 	local backBtn = Instance.new("TextButton")
 	backBtn.Name = "BackButton"
 	backBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -270,6 +327,7 @@ local function createNavigationBar(parent, onNavigate)
 	backBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	backBtn.Parent = navBar
 
+	-- Forward button
 	local fwdBtn = Instance.new("TextButton")
 	fwdBtn.Name = "ForwardButton"
 	fwdBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -280,6 +338,7 @@ local function createNavigationBar(parent, onNavigate)
 	fwdBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	fwdBtn.Parent = navBar
 
+	-- Address bar
 	local addressBar = Instance.new("TextBox")
 	addressBar.Name = "AddressBar"
 	addressBar.Size = UDim2.new(1, -150, 0, 30)
@@ -292,6 +351,7 @@ local function createNavigationBar(parent, onNavigate)
 	addressBar.ClearTextOnFocus = false
 	addressBar.Parent = navBar
 
+	-- Go button
 	local goBtn = Instance.new("TextButton")
 	goBtn.Name = "GoButton"
 	goBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -303,6 +363,7 @@ local function createNavigationBar(parent, onNavigate)
 	goBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	goBtn.Parent = navBar
 
+	-- Loading indicator
 	local loadingLabel = Instance.new("TextLabel")
 	loadingLabel.Name = "LoadingLabel"
 	loadingLabel.Size = UDim2.new(0, 100, 0, 30)
@@ -315,6 +376,7 @@ local function createNavigationBar(parent, onNavigate)
 	loadingLabel.Visible = false
 	loadingLabel.Parent = navBar
 
+	-- Navigation logic
 	local function navigateToUrl()
 		local url = addressBar.Text
 		if url ~= "" then
@@ -360,6 +422,7 @@ function BrowserEngine.render(domRoot, targetGui)
 		currentCSS = cssMap
 	end
 
+	-- Main container
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "BrowserMainFrame"
 	mainFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -367,12 +430,14 @@ function BrowserEngine.render(domRoot, targetGui)
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Parent = targetGui
 
+	-- Navigation bar
 	local nav = createNavigationBar(mainFrame, function(url)
 		if BrowserEngine.onNavigate then
 			BrowserEngine.onNavigate(url)
 		end
 	end)
 
+	-- Content scrolling frame
 	local scrollFrame = Instance.new("ScrollingFrame")
 	scrollFrame.Name = "BrowserContent"
 	scrollFrame.Size = UDim2.new(1, 0, 1, -40)
@@ -382,9 +447,11 @@ function BrowserEngine.render(domRoot, targetGui)
 	scrollFrame.ScrollBarThickness = 8
 	scrollFrame.Parent = mainFrame
 
+	-- Render DOM into scrolling frame
 	local yOffset = 0
 	local maxWidth = scrollFrame.AbsoluteSize.X - 20
 
+	-- Update maxWidth when frame resizes
 	scrollFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 		maxWidth = scrollFrame.AbsoluteSize.X - 20
 	end)
@@ -394,6 +461,7 @@ function BrowserEngine.render(domRoot, targetGui)
 		yOffset = yOffset + (height or 0)
 	end
 
+	-- Update canvas size
 	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset + 20)
 
 	return {
@@ -403,7 +471,7 @@ function BrowserEngine.render(domRoot, targetGui)
 	}
 end
 
--- Show/hide loading state
+-- Show loading state
 function BrowserEngine.showLoading(navBarElements)
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Text = "Loading..."
@@ -411,12 +479,14 @@ function BrowserEngine.showLoading(navBarElements)
 	end
 end
 
+-- Hide loading state
 function BrowserEngine.hideLoading(navBarElements)
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Visible = false
 	end
 end
 
+-- Update address bar
 function BrowserEngine.updateAddress(navBarElements, url)
 	if navBarElements and navBarElements.AddressBar then
 		navBarElements.AddressBar.Text = url
