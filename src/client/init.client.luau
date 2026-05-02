@@ -2,6 +2,7 @@
 --[[
   Updated client entry point – fetches HTML, parses it, and renders
   the DOM using the BrowserEngine we just added.
+  Default homepage is set to Wikipedia's main page.
 ]]
 
 local HttpService = game:GetService("HttpService")
@@ -30,12 +31,13 @@ local function init()
     screenGui.ResetOnSpawn = false
     screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Example URL – replace with any site that serves simple HTML.
-    local url = "https://example.com"
+    -- Wikipedia main page as default homepage.
+    local url = "https://en.wikipedia.org/wiki/Main_Page"
     local html = fetchHtml(url)
     local dom = HTMLParser.parse(html)
     BrowserEngine.render(dom, screenGui)
 end
 
 init()
+
 
