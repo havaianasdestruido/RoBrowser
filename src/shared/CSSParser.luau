@@ -1,0 +1,123 @@
+--!strict
+--!optimize 2
+--!native
+--[[
+  CSSParser - Simple CSS parser for Roblox Luau
+  Parses CSS text into a structured format that BrowserEngine can use
+  Supports: selectors (tag, class, id), properties, basic inheritance
+]]
+
+local CSSParser = {}
+
+-- Parse a single CSS rule
+local function parseRule(cssText)
+	local rules = {}
+
+	-- Remove comments
+	cssText = cssText:gsub("/%*.-%*/", "")
+
+	-- Find all rule blocks
+	for selectorStr, body in cssText:gmatch("([^{]+)%s*{([^}]+)}") do
+		local rule = {
+			selectors = {},
+			properties = {},
+		}
+
+		-- Parse selectors
+		for selector in selectorStr:gmatch("[^,]+") do
+			selector = selector:match("^%s*(.-)%s*$") -- trim
+			if selector ~= "" then
+				table.insert(rule.selectors, selector)
+			end
+		end
+
+		-- Parse properties
+		for prop, value in body:gmatch("([%w%-]+)%s*:%s*([^;]+);?") do
+			prop = prop:match("^%s*(.-)%s*$"):lower()
+			value = value:match("^%s*(.-)%s*$")
+			if prop ~= "" and value ~= "" then
+				rule.properties[prop] = value
+			end
+		end
+
+		if #rule.selectors > 0 then
+			table.insert(rules, rule)
+		end
+	end
+
+	return rules
+end
+
+-- Parse full CSS and return a lookup table
+function CSSParser.parse(cssText)
+	local rules = parseRule(cssText)
+	local styleMap = {}
+
+	for _, rule in ipairs(rules) do
+		for _, selector in ipairs(rule.selectors) do
+			if not styleMap[selector] then
+				styleMap[selector] = {}
+			end
+			-- Merge properties
+			for prop, value in pairs(rule.properties) do
+				styleMap[selector][prop] = value
+			end
+		end
+	end
+
+	return styleMap
+end
+
+-- Match a DOM element against CSS selectors
+function CSSParser.matchElement(element, styleMap)
+	if not element or element.type ~= "element" then
+		return {}
+	end
+
+	local styles = {}
+
+	-- Tag selector (e.g., "div")
+	local tagStyles = styleMap[element.tag]
+	if tagStyles then
+		for prop, value in pairs(tagStyles) do
+			styles[prop] = value
+		end
+	end
+
+	-- Class selector (e.g., ".myclass")
+	local className = element.attrs.class
+	if className then
+		for className in className:gmatch("%S+") do
+			local classStyles = styleMap["." .. className]
+			if classStyles then
+				for prop, value in pairs(classStyles) do
+					styles[prop] = value
+				end
+			end
+		end
+	end
+
+	-- ID selector (e.g., "#myid")
+	local id = element.attrs.id
+	if id then
+		local idStyles = styleMap["#" .. id]
+		if idStyles then
+			for prop, value in pairs(idStyles) do
+				styles[prop] = value
+			end
+		end
+	end
+
+	return styles
+end
+
+-- Convert CSS styles to inline style string for BrowserEngine
+function CSSParser.toInlineStyle(cssStyles)
+	local parts = {}
+	for prop, value in pairs(cssStyles) do
+		table.insert(parts, prop .. ": " .. value)
+	end
+	return table.concat(parts, "; ")
+end
+
+return CSSParser
