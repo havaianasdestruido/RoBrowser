@@ -4,7 +4,7 @@
 --[[
   Client entry point – fetches HTML via a server RemoteFunction, parses it, and renders
   the DOM using the BrowserEngine. Supports navigation, back/forward history,
-  and loading states. Default homepage is Wikipedia.
+  loading states, and error handling. Default homepage is Wikipedia.
 ]]
 
 local Players = game:GetService("Players")
@@ -21,9 +21,11 @@ local fetchHTML = ReplicatedStorage:WaitForChild("FetchHTML")
 local history = {}
 local historyIndex = 0
 local currentUrl = ""
+local isNavigating = false
 
 -- UI elements reference
 local navElements = nil
+local currentScreenGui = nil
 
 local function getHtml(url: string): string
 	local result = fetchHTML:InvokeServer(url)
@@ -31,12 +33,19 @@ local function getHtml(url: string): string
 		return result
 	else
 		warn("Failed to fetch URL via server:", url)
-		return "<html><body><h1>Failed to load page</h1><p>Unable to fetch: " .. url .. "</p></body></html>"
+		return nil
 	end
 end
 
+local function updateNavButtons()
+	if not navElements then return end
+	navElements.BackButton.AutoButtonColor = historyIndex > 1
+	navElements.ForwardButton.AutoButtonColor = historyIndex < #history
+end
+
 local function navigateToUrl(url: string)
-	if url == "" then return end
+	if url == "" or isNavigating then return end
+	isNavigating = true
 
 	-- Show loading state
 	if navElements then
@@ -51,47 +60,68 @@ local function navigateToUrl(url: string)
 
 	if success and html then
 		-- Parse HTML
-		local dom = HTMLParser.parse(html)
+		local success2, dom = pcall(function()
+			return HTMLParser.parse(html)
+		end)
 
-		-- Render
-		local screenGui = Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("BrowserScreen")
-		if screenGui then
-			navElements = BrowserEngine.render(dom, screenGui)
-		end
-
-		-- Update history
-		if url ~= currentUrl then
-			-- Remove forward history if we're not at the end
-			if historyIndex < #history then
-				for i = #history, historyIndex + 1, -1 do
-					table.remove(history, i)
+		if success2 and dom then
+			-- Render
+			if currentScreenGui then
+				navElements = BrowserEngine.render(dom, currentScreenGui)
+				-- Reconnect navigation callbacks
+				BrowserEngine.onNavigate = function(newUrl)
+					navigateToUrl(newUrl)
 				end
 			end
-			table.insert(history, url)
-			historyIndex = #history
-			currentUrl = url
-		end
 
-		-- Update button states
-		if navElements then
-			BrowserEngine.hideLoading(navElements)
-			navElements.BackButton.AutoButtonColor = historyIndex > 1
-			navElements.ForwardButton.AutoButtonColor = historyIndex < #history
+			-- Update history
+			if url ~= currentUrl then
+				-- Remove forward history if we're not at the end
+				if historyIndex < #history then
+					for i = #history, historyIndex + 1, -1 do
+						table.remove(history, i)
+					end
+				end
+				table.insert(history, url)
+				historyIndex = #history
+				currentUrl = url
+			end
+
+			-- Update button states
+			updateNavButtons()
+
+			-- Hide loading
+			if navElements then
+				BrowserEngine.hideLoading(navElements)
+			end
+		else
+			warn("Failed to parse HTML from:", url)
+			if navElements then
+				BrowserEngine.hideLoading(navElements)
+			end
 		end
 	else
 		warn("Failed to navigate to:", url)
 		if navElements then
 			BrowserEngine.hideLoading(navElements)
+			-- Show error page
+			local errorHtml = "<html><body><h1>Failed to load page</h1><p>Unable to fetch: " .. url .. "</p></body></html>"
+			local dom = HTMLParser.parse(errorHtml)
+			if currentScreenGui then
+				navElements = BrowserEngine.render(dom, currentScreenGui)
+			end
 		end
 	end
+
+	isNavigating = false
 end
 
 local function init()
 	-- Create a ScreenGui to hold the rendered page
-	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "BrowserScreen"
-	screenGui.ResetOnSpawn = false
-	screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	currentScreenGui = Instance.new("ScreenGui")
+	currentScreenGui.Name = "BrowserScreen"
+	currentScreenGui.ResetOnSpawn = false
+	currentScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	-- Set up navigation callback
 	BrowserEngine.onNavigate = function(url)
@@ -103,40 +133,39 @@ local function init()
 	navigateToUrl(defaultUrl)
 end
 
--- Set up back/forward button handlers (will be connected after first render)
+-- Set up back/forward button handlers
 local function setupNavigationButtons()
-	-- This will be called after first render
 	task.spawn(function()
-		task.wait(0.5) -- Wait for UI to be created
-		local screenGui = Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("BrowserScreen")
-		if screenGui then
-			local mainFrame = screenGui:FindFirstChild("BrowserMainFrame")
-			if mainFrame then
-				local navBar = mainFrame:FindFirstChild("NavigationBar")
-				if navBar then
-					local backBtn = navBar:FindFirstChild("BackButton")
-					local fwdBtn = navBar:FindFirstChild("ForwardButton")
+		task.wait(1) -- Wait for UI to be created
+		while task.wait(0.5) do
+			if navElements then
+				local backBtn = navElements.BackButton
+				local fwdBtn = navElements.ForwardButton
 
-					if backBtn then
-						backBtn.MouseButton1Click:Connect(function()
-							if historyIndex > 1 then
-								historyIndex = historyIndex - 1
-								local url = history[historyIndex]
-								navigateToUrl(url)
-							end
-						end)
-					end
-
-					if fwdBtn then
-						fwdBtn.MouseButton1Click:Connect(function()
-							if historyIndex < #history then
-								historyIndex = historyIndex + 1
-								local url = history[historyIndex]
-								navigateToUrl(url)
-							end
-						end)
-					end
+				if backBtn and not backBtn:GetAttribute("ClickConnected") then
+					backBtn:SetAttribute("ClickConnected", true)
+					backBtn.MouseButton1Click:Connect(function()
+						if historyIndex > 1 then
+							historyIndex = historyIndex - 1
+							local url = history[historyIndex]
+							navigateToUrl(url)
+						end
+					end)
 				end
+
+				if fwdBtn and not fwdBtn:GetAttribute("ClickConnected") then
+					fwdBtn:SetAttribute("ClickConnected", true)
+					fwdBtn.MouseButton1Click:Connect(function()
+						if historyIndex < #history then
+							historyIndex = historyIndex + 1
+							local url = history[historyIndex]
+							navigateToUrl(url)
+						end
+					end)
+				end
+
+				-- Update button states
+				updateNavButtons()
 			end
 		end
 	end)
