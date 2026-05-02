@@ -1,29 +1,21 @@
 --!strict
 --!optimize 2
 --!native
---[[
-  BrowserEngine – renders a lightweight DOM (produced by HTMLParser) into
-  Roblox GUI objects (Frame, TextLabel, ImageLabel, etc.).
-  Supports a wide range of HTML tags (see utils/html_tags.txt).
-  Tags are grouped into block elements, inline text elements, and media.
-  Includes navigation bar, scrolling, link handling, loading states, CSS support,
-  and form handling.
-]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local BrowserEngine = {}
 
--- Require CSS parser
-local CSSParser = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("CSSParser"))
+-- Safe module loader
+local function loadModule(name)
+	local Shared = ReplicatedStorage:WaitForChild("Shared")
+	return require(Shared:WaitForChild("parsers"):WaitForChild(name))
+end
 
--- Navigation callback (set by client)
+local CSSParser = loadModule("CSSParser")
+
 BrowserEngine.onNavigate = nil
-
--- Form submission callback
 BrowserEngine.onFormSubmit = nil
 
--- Store parsed CSS for current page
 local currentCSS = {}
 
 -- Apply a single CSS property
@@ -32,17 +24,25 @@ local function applySingleStyle(instance, prop, val)
 	val = val:lower()
 
 	if prop == "background-color" then
-		local ok, color = pcall(function() return Color3.fromHex(val) end)
+		local ok, color = pcall(function()
+			return Color3.fromHex(val)
+		end)
 		if ok then
 			instance.BackgroundColor3 = color
 			instance.BackgroundTransparency = 0
 		end
 	elseif prop == "color" then
-		local ok, color = pcall(function() return Color3.fromHex(val) end)
-		if ok then instance.TextColor3 = color end
+		local ok, color = pcall(function()
+			return Color3.fromHex(val)
+		end)
+		if ok then
+			instance.TextColor3 = color
+		end
 	elseif prop == "font-size" then
 		local num = tonumber(val:match("%d+"))
-		if num then instance.TextSize = num end
+		if num then
+			instance.TextSize = num
+		end
 	elseif prop == "font-weight" and val == "bold" then
 		instance.Font = Enum.Font.SourceSansBold
 	elseif prop == "font-style" and val == "italic" then
@@ -55,26 +55,27 @@ local function applySingleStyle(instance, prop, val)
 		end
 	elseif prop == "width" then
 		local num = tonumber(val:match("%d+"))
-		if num then instance.Size = UDim2.new(0, num, instance.Size.Y.Scale, instance.Size.Y.Offset) end
+		if num then
+			instance.Size = UDim2.new(0, num, instance.Size.Y.Scale, instance.Size.Y.Offset)
+		end
 	elseif prop == "height" then
 		local num = tonumber(val:match("%d+"))
-		if num then instance.Size = UDim2.new(instance.Size.X.Scale, instance.Size.X.Offset, 0, num) end
+		if num then
+			instance.Size = UDim2.new(instance.Size.X.Scale, instance.Size.X.Offset, 0, num)
+		end
 	elseif prop == "display" and val == "none" then
 		instance.Visible = false
 	end
 end
 
--- Helper: apply styles to a Roblox Instance
+-- Apply styles to instance
 local function applyStyles(instance, attrs, cssStyles)
-	-- Apply inline styles first
 	if attrs and attrs.style then
 		for prop, val in attrs.style:gmatch("([%w%-]+):%s*([^;]+)") do
-			prop = prop:lower()
-			applySingleStyle(instance, prop, val)
+			applySingleStyle(instance, prop:lower(), val)
 		end
 	end
 
-	-- Apply CSS styles
 	if cssStyles then
 		for prop, val in pairs(cssStyles) do
 			applySingleStyle(instance, prop, val)
@@ -82,31 +83,34 @@ local function applyStyles(instance, attrs, cssStyles)
 	end
 
 	if attrs then
-		if attrs.id then instance.Name = attrs.id end
-		if attrs.class then instance:SetAttribute("Class", attrs.class) end
+		if attrs.id then
+			instance.Name = attrs.id
+		end
+		if attrs.class then
+			instance:SetAttribute("Class", attrs.class)
+		end
 	end
 end
 
 -- Tag categories
 local blockTags = {
-	"html","head","body","div","section","article","nav","aside","header","footer","main",
-	"ul","ol","li","dl","dt","dd","table","thead","tbody","tfoot","tr","td","th",
-	"form","fieldset","legend","details","summary","figure","figcaption","blockquote","pre","canvas","svg",
-	"math","iframe","video","audio","embed","object","g","path","rect","circle","ellipse","line","polygon","polyline",
-	"mask","filter","lineargradient","radialgradient","pattern","defs","symbol","use","marker","clipPath",
-	"metadata","title","meta","link","style","script","noscript","template","slot","input","button","select","option","optgroup",
-	"textarea","label","progress","meter","output",
-	"hr",
+	"html", "head", "body", "div", "section", "article", "nav", "aside", "header", "footer", "main",
+	"ul", "ol", "li", "dl", "dt", "dd", "table", "thead", "tbody", "tfoot", "tr", "td", "th",
+	"form", "fieldset", "legend", "details", "summary", "figure", "figcaption", "blockquote", "pre", "canvas", "svg",
+	"math", "iframe", "video", "audio", "embed", "object",
+	"metadata", "title", "meta", "link", "style", "script", "noscript", "template", "slot",
+	"input", "button", "select", "option", "optgroup", "textarea", "label", "progress", "meter", "output",
+	"hr"
 }
 
 local inlineTextTags = {
-	"p","span","a","b","i","strong","em","small","sub","sup","mark","abbr","cite","code","kbd","samp","var","del","ins","ruby","rt","rp","q","time","u","s","strike","bdi","bdo",
-	"label","legend","summary",
-	"h1","h2","h3","h4","h5","h6",
-	"pre","blockquote","figcaption",
+	"p", "span", "a", "b", "i", "strong", "em", "small", "sub", "sup", "mark", "abbr", "cite", "code", "kbd", "samp", "var", "del", "ins", "ruby", "rt", "rp", "q", "time", "u", "s", "strike", "bdi", "bdo",
+	"label", "legend", "summary",
+	"h1", "h2", "h3", "h4", "h5", "h6",
+	"pre", "blockquote", "figcaption"
 }
 
-local imageTags = {"img","image","picture","svg"}
+local imageTags = {"img", "image", "picture", "svg"}
 
 -- Convert arrays to sets
 local function arrayToSet(arr)
@@ -121,7 +125,7 @@ local blockSet = arrayToSet(blockTags)
 local inlineSet = arrayToSet(inlineTextTags)
 local imageSet = arrayToSet(imageTags)
 
--- Mapping function: returns a creator based on tag
+-- Creator for tag
 local function creatorForTag(tag)
 	if imageSet[tag] then
 		return function() return Instance.new("ImageLabel") end
@@ -143,7 +147,9 @@ end
 -- Calculate text height
 local function calculateTextHeight(text, textSize, width)
 	local charsPerLine = math.floor(width / (textSize * 0.6))
-	if charsPerLine <= 0 then return textSize + 4 end
+	if charsPerLine <= 0 then
+		return textSize + 4
+	end
 	local lines = math.ceil(#text / charsPerLine)
 	return math.max(textSize + 4, lines * (textSize + 2))
 end
@@ -208,14 +214,6 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 				inst.Font = Enum.Font.SourceSans
 				inst.TextSize = 14
 				height = 32
-
-				-- Handle button clicks (form submission, etc.)
-				inst.MouseButton1Click:Connect(function()
-					if node.attrs.onclick then
-						-- Execute inline onclick (basic eval)
-						warn("Inline onclick not supported:", node.attrs.onclick)
-					end
-				end)
 			else
 				-- Regular text element
 				inst.Text = text
@@ -338,11 +336,22 @@ local function createNavigationBar(parent, onNavigate)
 	fwdBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	fwdBtn.Parent = navBar
 
+	-- Refresh button
+	local refreshBtn = Instance.new("TextButton")
+	refreshBtn.Name = "RefreshButton"
+	refreshBtn.Size = UDim2.new(0, 40, 0, 30)
+	refreshBtn.Position = UDim2.new(0, 95, 0, 5)
+	refreshBtn.Text = "↻"
+	refreshBtn.Font = Enum.Font.SourceSansBold
+	refreshBtn.TextSize = 18
+	refreshBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	refreshBtn.Parent = navBar
+
 	-- Address bar
 	local addressBar = Instance.new("TextBox")
 	addressBar.Name = "AddressBar"
-	addressBar.Size = UDim2.new(1, -150, 0, 30)
-	addressBar.Position = UDim2.new(0, 95, 0, 5)
+	addressBar.Size = UDim2.new(1, -200, 0, 30)
+	addressBar.Position = UDim2.new(0, 140, 0, 5)
 	addressBar.Text = "https://en.wikipedia.org/wiki/Main_Page"
 	addressBar.Font = Enum.Font.SourceSans
 	addressBar.TextSize = 14
@@ -402,12 +411,13 @@ local function createNavigationBar(parent, onNavigate)
 		AddressBar = addressBar,
 		BackButton = backBtn,
 		ForwardButton = fwdBtn,
+		RefreshButton = refreshBtn,
 		GoButton = goBtn,
 		LoadingLabel = loadingLabel,
 	}
 end
 
--- Public API: render(domRoot, targetGui)
+-- Public API: render
 function BrowserEngine.render(domRoot, targetGui)
 	if not targetGui or not targetGui:IsA("ScreenGui") then
 		error("BrowserEngine.render: targetGui must be a ScreenGui instance")

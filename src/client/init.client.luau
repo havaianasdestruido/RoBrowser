@@ -4,15 +4,16 @@
 --[[
   Client entry point – fetches HTML via a server RemoteFunction, parses it, and renders
   the DOM using the BrowserEngine. Supports navigation, back/forward history,
-  loading states, and error handling. Default homepage is Wikipedia.
+  bookmarks, refresh, and error handling. Default homepage is Wikipedia.
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Require modules from ReplicatedStorage.Shared (Rojo maps src/shared here)
-local HTMLParser = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HTMLParser"))
-local BrowserEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BrowserEngine"))
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local HTMLParser = require(Shared:WaitForChild("parsers"):WaitForChild("HTMLParser"))
+local BrowserEngine = require(Shared:WaitForChild("modules"):WaitForChild("BrowserEngine"))
 
 -- RemoteFunction that the server provides for HTTP requests
 local fetchHTML = ReplicatedStorage:WaitForChild("FetchHTML")
@@ -22,6 +23,12 @@ local history = {}
 local historyIndex = 0
 local currentUrl = ""
 local isNavigating = false
+
+-- Bookmarks
+local bookmarks = {
+	{title = "Wikipedia", url = "https://en.wikipedia.org/wiki/Main_Page"},
+	{title = "Google", url = "https://www.google.com"},
+}
 
 -- UI elements reference
 local navElements = nil
@@ -65,6 +72,20 @@ local function navigateToUrl(url: string)
 		end)
 
 		if success2 and dom then
+			-- Extract title
+			local pageTitle = "Untitled"
+			for _, child in ipairs(dom.children or {}) do
+				if child.type == "element" and child.tag == "head" then
+					for _, headChild in ipairs(child.children or {}) do
+						if headChild.type == "element" and headChild.tag == "title" then
+							pageTitle = headChild.children[1] and headChild.children[1].text or "Untitled"
+							break
+						end
+					end
+					break
+				end
+			end
+
 			-- Render
 			if currentScreenGui then
 				navElements = BrowserEngine.render(dom, currentScreenGui)
@@ -105,7 +126,7 @@ local function navigateToUrl(url: string)
 		if navElements then
 			BrowserEngine.hideLoading(navElements)
 			-- Show error page
-			local errorHtml = "<html><body><h1>Failed to load page</h1><p>Unable to fetch: " .. url .. "</p></body></html>"
+			local errorHtml = "<html><head><title>Error</title></head><body><h1>Failed to load page</h1><p>Unable to fetch: " .. url .. "</p></body></html>"
 			local dom = HTMLParser.parse(errorHtml)
 			if currentScreenGui then
 				navElements = BrowserEngine.render(dom, currentScreenGui)
@@ -141,6 +162,7 @@ local function setupNavigationButtons()
 			if navElements then
 				local backBtn = navElements.BackButton
 				local fwdBtn = navElements.ForwardButton
+				local refreshBtn = navElements.RefreshButton
 
 				if backBtn and not backBtn:GetAttribute("ClickConnected") then
 					backBtn:SetAttribute("ClickConnected", true)
@@ -160,6 +182,15 @@ local function setupNavigationButtons()
 							historyIndex = historyIndex + 1
 							local url = history[historyIndex]
 							navigateToUrl(url)
+						end
+					end)
+				end
+
+				if refreshBtn and not refreshBtn:GetAttribute("ClickConnected") then
+					refreshBtn:SetAttribute("ClickConnected", true)
+					refreshBtn.MouseButton1Click:Connect(function()
+						if currentUrl ~= "" then
+							navigateToUrl(currentUrl)
 						end
 					end)
 				end
