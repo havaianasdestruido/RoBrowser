@@ -6,64 +6,92 @@
   Roblox GUI objects (Frame, TextLabel, ImageLabel, etc.).
   Supports a wide range of HTML tags (see utils/html_tags.txt).
   Tags are grouped into block elements, inline text elements, and media.
-  Includes navigation bar, scrolling, link handling, and loading states.
+  Includes navigation bar, scrolling, link handling, loading states, and CSS support.
 ]]
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local BrowserEngine = {}
+
+-- Require CSS parser
+local CSSParser = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("CSSParser"))
 
 -- Navigation callback (set by client)
 BrowserEngine.onNavigate = nil
 
--- Helper: apply basic style attributes to a Roblox Instance
-local function applyStyles(instance, attrs)
-	if not attrs then return end
-	if attrs.style then
-		for prop, val in attrs.style:gmatch("([%w%-]+):%s*([^;]+)") do
-			prop = prop:lower()
-			if prop == "background-color" then
-				local ok, color = pcall(function() return Color3.fromHex(val) end)
-				if ok then
-					instance.BackgroundColor3 = color
-					instance.BackgroundTransparency = 0
-				end
-			elseif prop == "color" then
-				local ok, color = pcall(function() return Color3.fromHex(val) end)
-				if ok then instance.TextColor3 = color end
-			elseif prop == "font-size" then
-				local num = tonumber(val:match("%d+"))
-				if num then instance.TextSize = num end
-			elseif prop == "font-weight" and val == "bold" then
-				instance.Font = Enum.Font.SourceSansBold
-			elseif prop == "font-style" and val == "italic" then
-				instance.Font = Enum.Font.SourceSansItalic
-			elseif prop == "text-align" then
-				if val == "center" then
-					instance.TextXAlignment = Enum.TextXAlignment.Center
-				elseif val == "right" then
-					instance.TextXAlignment = Enum.TextXAlignment.Right
-				end
-			elseif prop == "width" then
-				local num = tonumber(val:match("%d+"))
-				if num then instance.Size = UDim2.new(0, num, instance.Size.Y.Scale, instance.Size.Y.Offset) end
-			elseif prop == "height" then
-				local num = tonumber(val:match("%d+"))
-				if num then instance.Size = UDim2.new(instance.Size.X.Scale, instance.Size.X.Offset, 0, num) end
-			end
+-- Store parsed CSS for current page
+local currentCSS = {}
+
+-- Apply a single CSS property
+local function applySingleStyle(instance, prop, val)
+	prop = prop:lower()
+	val = val:lower()
+
+	if prop == "background-color" then
+		local ok, color = pcall(function() return Color3.fromHex(val) end)
+		if ok then
+			instance.BackgroundColor3 = color
+			instance.BackgroundTransparency = 0
 		end
+	elseif prop == "color" then
+		local ok, color = pcall(function() return Color3.fromHex(val) end)
+		if ok then instance.TextColor3 = color end
+	elseif prop == "font-size" then
+		local num = tonumber(val:match("%d+"))
+		if num then instance.TextSize = num end
+	elseif prop == "font-weight" and val == "bold" then
+		instance.Font = Enum.Font.SourceSansBold
+	elseif prop == "font-style" and val == "italic" then
+		instance.Font = Enum.Font.SourceSansItalic
+	elseif prop == "text-align" then
+		if val == "center" then
+			instance.TextXAlignment = Enum.TextXAlignment.Center
+		elseif val == "right" then
+			instance.TextXAlignment = Enum.TextXAlignment.Right
+		end
+	elseif prop == "width" then
+		local num = tonumber(val:match("%d+"))
+		if num then instance.Size = UDim2.new(0, num, instance.Size.Y.Scale, instance.Size.Y.Offset) end
+	elseif prop == "height" then
+		local num = tonumber(val:match("%d+"))
+		if num then instance.Size = UDim2.new(instance.Size.X.Scale, instance.Size.X.Offset, 0, num) end
+	elseif prop == "display" and val == "none" then
+		instance.Visible = false
 	end
-	if attrs.id then instance.Name = attrs.id end
-	if attrs.class then instance:SetAttribute("Class", attrs.class) end
 end
 
--- Tag categories ------------------------------------------------------------
+-- Helper: apply styles to a Roblox Instance
+local function applyStyles(instance, attrs, cssStyles)
+	-- Apply inline styles first
+	if attrs and attrs.style then
+		for prop, val in attrs.style:gmatch("([%w%-]+):%s*([^;]+)") do
+			prop = prop:lower()
+			applySingleStyle(instance, prop, val)
+		end
+	end
+
+	-- Apply CSS styles
+	if cssStyles then
+		for prop, val in pairs(cssStyles) do
+			applySingleStyle(instance, prop, val)
+		end
+	end
+
+	if attrs then
+		if attrs.id then instance.Name = attrs.id end
+		if attrs.class then instance:SetAttribute("Class", attrs.class) end
+	end
+end
+
+-- Tag categories
 local blockTags = {
 	"html","head","body","div","section","article","nav","aside","header","footer","main",
 	"ul","ol","li","dl","dt","dd","table","thead","tbody","tfoot","tr","td","th",
 	"form","fieldset","legend","details","summary","figure","figcaption","blockquote","pre","canvas","svg",
-	"math","iframe","video","audio","embed","object","canvas","g","path","rect","circle","ellipse","line","polygon","polyline",
+	"math","iframe","video","audio","embed","object","g","path","rect","circle","ellipse","line","polygon","polyline",
 	"mask","filter","lineargradient","radialgradient","pattern","defs","symbol","use","marker","clipPath",
 	"metadata","title","meta","link","style","script","noscript","template","slot","input","button","select","option","optgroup",
-	"textarea","label","fieldset","legend","progress","meter","output",
+	"textarea","label","progress","meter","output",
 	"hr",
 }
 
@@ -76,12 +104,7 @@ local inlineTextTags = {
 
 local imageTags = {"img","image","picture","svg"}
 
--- Helper to check table membership
-local function inSet(set, key)
-	return set[key] ~= nil
-end
-
--- Convert arrays to set tables for O(1) lookup
+-- Convert arrays to sets
 local function arrayToSet(arr)
 	local set = {}
 	for _, v in ipairs(arr) do
@@ -96,31 +119,29 @@ local imageSet = arrayToSet(imageTags)
 
 -- Mapping function: returns a creator based on tag
 local function creatorForTag(tag)
-	if inSet(imageSet, tag) then
+	if imageSet[tag] then
 		return function() return Instance.new("ImageLabel") end
-	elseif inSet(inlineSet, tag) then
+	elseif inlineSet[tag] then
 		if tag == "a" then
 			return function() return Instance.new("TextButton") end
 		else
 			return function() return Instance.new("TextLabel") end
 		end
 	else
-		-- default to Frame for block elements and unknown tags
 		return function() return Instance.new("Frame") end
 	end
 end
 
--- Calculate text height based on content
+-- Calculate text height
 local function calculateTextHeight(text, textSize, width)
-	-- Simple estimation: assume average char width is textSize * 0.6
 	local charsPerLine = math.floor(width / (textSize * 0.6))
 	if charsPerLine <= 0 then return textSize + 4 end
 	local lines = math.ceil(#text / charsPerLine)
 	return math.max(textSize + 4, lines * (textSize + 2))
 end
 
--- Render a single DOM node into a Roblox Instance
-local function renderNode(node, parent, yOffset, maxWidth)
+-- Render a single DOM node
+local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 	if node.type == "text" then
 		local txt = Instance.new("TextLabel")
 		txt.Text = node.text
@@ -137,13 +158,20 @@ local function renderNode(node, parent, yOffset, maxWidth)
 	elseif node.type == "element" then
 		local creator = creatorForTag(node.tag)
 		local inst = creator()
-		applyStyles(inst, node.attrs)
 
-		-- Set sensible defaults based on tag
+		-- Get CSS styles
+		local cssStyles = {}
+		if cssMap and node.tag then
+			cssStyles = CSSParser.matchElement(node, cssMap) or {}
+		end
+
+		-- Apply styles
+		applyStyles(inst, node.attrs, cssStyles)
+
+		-- Set defaults based on tag
 		local height = 24
 		if inst:IsA("TextLabel") or inst:IsA("TextButton") then
 			local text = node.attrs.title or node.attrs.alt or ""
-			-- Collect text from children
 			for _, child in ipairs(node.children or {}) do
 				if child.type == "text" then
 					text = text .. child.text
@@ -161,7 +189,6 @@ local function renderNode(node, parent, yOffset, maxWidth)
 			if node.tag == "a" and node.attrs.href then
 				inst.BackgroundTransparency = 1
 				inst.TextColor3 = Color3.fromRGB(0, 102, 204)
-				inst.Font = Enum.Font.SourceSans
 				inst.MouseEnter:Connect(function()
 					inst.TextColor3 = Color3.fromRGB(204, 0, 0)
 					inst.Font = Enum.Font.SourceSansUnderline
@@ -188,12 +215,10 @@ local function renderNode(node, parent, yOffset, maxWidth)
 			inst.ScaleType = Enum.ScaleType.Fit
 			height = 200
 		else
-			-- Block elements
 			inst.Size = UDim2.new(1, -20, 0, 30)
 			inst.Position = UDim2.new(0, 10, 0, yOffset)
 			inst.BackgroundTransparency = 1
 
-			-- Special handling for headings
 			if node.tag == "h1" then
 				inst.Size = UDim2.new(1, -20, 0, 40)
 				height = 40
@@ -216,7 +241,7 @@ local function renderNode(node, parent, yOffset, maxWidth)
 		-- Render children
 		local childYOffset = 0
 		for _, child in ipairs(node.children or {}) do
-			local _, childHeight = renderNode(child, inst, childYOffset, maxWidth)
+			local _, childHeight = renderNode(child, inst, childYOffset, maxWidth, cssMap)
 			childYOffset = childYOffset + (childHeight or 0)
 		end
 
@@ -235,7 +260,6 @@ local function createNavigationBar(parent, onNavigate)
 	navBar.BorderSizePixel = 1
 	navBar.Parent = parent
 
-	-- Back button
 	local backBtn = Instance.new("TextButton")
 	backBtn.Name = "BackButton"
 	backBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -246,7 +270,6 @@ local function createNavigationBar(parent, onNavigate)
 	backBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	backBtn.Parent = navBar
 
-	-- Forward button
 	local fwdBtn = Instance.new("TextButton")
 	fwdBtn.Name = "ForwardButton"
 	fwdBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -257,7 +280,6 @@ local function createNavigationBar(parent, onNavigate)
 	fwdBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	fwdBtn.Parent = navBar
 
-	-- Address bar
 	local addressBar = Instance.new("TextBox")
 	addressBar.Name = "AddressBar"
 	addressBar.Size = UDim2.new(1, -150, 0, 30)
@@ -270,7 +292,6 @@ local function createNavigationBar(parent, onNavigate)
 	addressBar.ClearTextOnFocus = false
 	addressBar.Parent = navBar
 
-	-- Go button
 	local goBtn = Instance.new("TextButton")
 	goBtn.Name = "GoButton"
 	goBtn.Size = UDim2.new(0, 40, 0, 30)
@@ -282,7 +303,6 @@ local function createNavigationBar(parent, onNavigate)
 	goBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	goBtn.Parent = navBar
 
-	-- Loading indicator
 	local loadingLabel = Instance.new("TextLabel")
 	loadingLabel.Name = "LoadingLabel"
 	loadingLabel.Size = UDim2.new(0, 100, 0, 30)
@@ -295,7 +315,6 @@ local function createNavigationBar(parent, onNavigate)
 	loadingLabel.Visible = false
 	loadingLabel.Parent = navBar
 
-	-- Navigation logic
 	local function navigateToUrl()
 		local url = addressBar.Text
 		if url ~= "" then
@@ -334,7 +353,13 @@ function BrowserEngine.render(domRoot, targetGui)
 
 	targetGui:ClearAllChildren()
 
-	-- Main container
+	-- Parse CSS from DOM
+	local cssMap = {}
+	if domRoot.css then
+		cssMap = CSSParser.parse(domRoot.css)
+		currentCSS = cssMap
+	end
+
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "BrowserMainFrame"
 	mainFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -342,14 +367,12 @@ function BrowserEngine.render(domRoot, targetGui)
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Parent = targetGui
 
-	-- Navigation bar
 	local nav = createNavigationBar(mainFrame, function(url)
 		if BrowserEngine.onNavigate then
 			BrowserEngine.onNavigate(url)
 		end
 	end)
 
-	-- Content scrolling frame
 	local scrollFrame = Instance.new("ScrollingFrame")
 	scrollFrame.Name = "BrowserContent"
 	scrollFrame.Size = UDim2.new(1, 0, 1, -40)
@@ -359,21 +382,18 @@ function BrowserEngine.render(domRoot, targetGui)
 	scrollFrame.ScrollBarThickness = 8
 	scrollFrame.Parent = mainFrame
 
-	-- Render DOM into scrolling frame
 	local yOffset = 0
 	local maxWidth = scrollFrame.AbsoluteSize.X - 20
 
-	-- Update maxWidth when frame resizes
 	scrollFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
 		maxWidth = scrollFrame.AbsoluteSize.X - 20
 	end)
 
 	for _, child in ipairs(domRoot.children or {}) do
-		local _, height = renderNode(child, scrollFrame, yOffset, maxWidth)
+		local _, height = renderNode(child, scrollFrame, yOffset, maxWidth, cssMap)
 		yOffset = yOffset + (height or 0)
 	end
 
-	-- Update canvas size
 	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset + 20)
 
 	return {
@@ -383,7 +403,7 @@ function BrowserEngine.render(domRoot, targetGui)
 	}
 end
 
--- Show loading state
+-- Show/hide loading state
 function BrowserEngine.showLoading(navBarElements)
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Text = "Loading..."
@@ -391,14 +411,12 @@ function BrowserEngine.showLoading(navBarElements)
 	end
 end
 
--- Hide loading state
 function BrowserEngine.hideLoading(navBarElements)
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Visible = false
 	end
 end
 
--- Update address bar
 function BrowserEngine.updateAddress(navBarElements, url)
 	if navBarElements and navBarElements.AddressBar then
 		navBarElements.AddressBar.Text = url
