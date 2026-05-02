@@ -2,9 +2,6 @@
 --[[
   Simple HTML parser for Roblox Luau.
   Parses a subset of HTML into a lightweight DOM structure.
-  Supported tags: div, p, span, a, img, br, h1-h6, ul, li, ol, strong, em.
-  Attributes supported: id, class, src, href, style.
-  The parser is intentionally minimal – it tokenises tags and builds a tree of Nodes.
   Node types: ElementNode, TextNode.
   Usage:
     local parser = require(script.HTMLParser)
@@ -14,8 +11,8 @@
 
 local HTMLParser = {}
 
--- Node constructors ------------------------------------------------------------
-local function ElementNode(tag, attrs)
+-- Node constructors
+local function ElementNode(tag: string, attrs: {[string]: string}?)
     return {
         type = "element",
         tag = tag,
@@ -24,44 +21,48 @@ local function ElementNode(tag, attrs)
     }
 end
 
-local function TextNode(text)
+local function TextNode(text: string)
     return {
         type = "text",
         text = text,
     }
 end
 
--- Helper to trim whitespace ---------------------------------------------------
-local function trim(s)
-    return s:match("^%s*(.-)%s*$")
+-- Helper to trim whitespace
+local function trim(s: string): string
+    return string.match(s, "^%s*(.-)%s*$")
 end
 
--- Simple attribute parser: converts `key="value"` pairs into a table.
-local function parseAttributes(attrString)
+-- Simple attribute parser: converts key="value" pairs into a table
+local function parseAttributes(attrString: string): {[string]: string}
     local attrs = {}
-    for key, value in attrString:gmatch("(%w+)%s*=%s*\"(.-)\"") do
+    for key, value in string.gmatch(attrString, "(%w+)%s*=%s*\"(.-)\"") do
         attrs[key] = value
     end
     return attrs
 end
 
--- Tokeniser ------------------------------------------------------------------
-local function tokenize(html)
+-- Tokeniser
+local function tokenize(html: string): {{type: string, content: string}}
     local tokens = {}
     local pos = 1
-    while pos <= #html do
-        local char = html:sub(pos, pos)
-        if char == "\u003c" then
+    local htmlLength = #html
+
+    while pos <= htmlLength do
+        local char = string.sub(html, pos, pos)
+        if char == "<" then
             -- find end of tag
-            local close = html:find("\u003e", pos)
-            if not close then break end
-            local tagContent = html:sub(pos + 1, close - 1)
+            local close = string.find(html, ">", pos)
+            if not close then
+                break
+            end
+            local tagContent = string.sub(html, pos + 1, close - 1)
             table.insert(tokens, {type = "tag", content = tagContent})
             pos = close + 1
         else
-            -- text node until next '\u003c'
-            local nextTag = html:find("\u003c", pos) or (#html + 1)
-            local text = html:sub(pos, nextTag - 1)
+            -- text node until next '<'
+            local nextTag = string.find(html, "<", pos) or (htmlLength + 1)
+            local text = string.sub(html, pos, nextTag - 1)
             table.insert(tokens, {type = "text", content = text})
             pos = nextTag
         end
@@ -69,8 +70,8 @@ local function tokenize(html)
     return tokens
 end
 
--- Parser ---------------------------------------------------------------------
-function HTMLParser.parse(html)
+-- Parser
+function HTMLParser.parse(html: string)
     local tokens = tokenize(html)
     local stack = {}
     local root = ElementNode("body")
@@ -85,9 +86,9 @@ function HTMLParser.parse(html)
             end
         elseif token.type == "tag" then
             local content = token.content
-            if content:sub(1,1) == "/" then
+            if string.sub(content, 1, 1) == "/" then
                 -- closing tag: pop stack if matches
-                local closingTag = content:sub(2):match("^%s*(%w+)")
+                local closingTag = string.match(string.sub(content, 2), "^%s*(%w+)")
                 while #stack > 1 do
                     local top = stack[#stack]
                     if top.tag == closingTag then
@@ -98,16 +99,16 @@ function HTMLParser.parse(html)
                     end
                 end
             else
-                local isSelfClosing = content:sub(-1) == "/"
+                local isSelfClosing = string.sub(content, -1) == "/"
                 if isSelfClosing then
-                    content = content:sub(1, -2)
+                    content = string.sub(content, 1, -2)
                 end
                 local parts = {}
-                for part in content:gmatch("[^%s]+") do
+                for part in string.gmatch(content, "[^%s]+") do
                     table.insert(parts, part)
                 end
                 local tagName = parts[1]
-                local attrString = content:sub(#tagName + 1)
+                local attrString = string.sub(content, #tagName + 1)
                 local attrs = parseAttributes(attrString)
                 local node = ElementNode(tagName, attrs)
                 local parent = stack[#stack]

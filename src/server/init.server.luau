@@ -2,11 +2,16 @@
 --[[
   Server script that provides a RemoteFunction for fetching HTML
   using HttpService. Clients invoke this to bypass the client‑side HTTP
-  restriction.
+  restriction. It also checks that HttpService is enabled in the game settings.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+
+-- Verify HttpService is enabled (must be toggled in Game Settings > Security)
+if not HttpService.HttpEnabled then
+    warn("[FetchHTML] HttpService is disabled. Enable HTTP requests in game settings.")
+end
 
 -- Create RemoteFunction if it doesn't exist
 local fetchHTML = ReplicatedStorage:FindFirstChild("FetchHTML")
@@ -34,4 +39,5 @@ fetchHTML.OnServerInvoke = function(player, url)
 end
 
 print("Server ready: FetchHTML RemoteFunction created")
+
 

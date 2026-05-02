@@ -14,7 +14,7 @@ local BrowserEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForCh
 -- RemoteFunction that the server provides for HTTP requests
 local fetchHTML = ReplicatedStorage:WaitForChild("FetchHTML")
 
-local function getHtml(url)
+local function getHtml(url: string): string
     local result = fetchHTML:InvokeServer(url)
     if result then
         return result
@@ -38,6 +38,3 @@ local function init()
 end
 
 init()
-
-
-
