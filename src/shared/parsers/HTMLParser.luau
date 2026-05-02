@@ -8,6 +8,18 @@
 
 local HTMLParser = {}
 
+-- Safe debug module loader
+local Debug = nil
+pcall(function()
+	Debug = require(script.Parent.Parent:WaitForChild("debug"))
+end)
+
+local function debugLog(level, message, source)
+	if Debug then
+		Debug[level](message, source or "HTMLParser")
+	end
+end
+
 -- Node constructors
 local function ElementNode(tag, attrs)
 	return {
@@ -44,11 +56,13 @@ local function parseAttributes(attrString)
 			attrs[key] = true
 		end
 	end
+	debugLog("verbose", `Parsed attributes: {pairs(attrs) and "found" or "none"}`, "HTMLParser")
 	return attrs
 end
 
 -- Tokeniser: breaks HTML into tags and text
 local function tokenize(html)
+	debugLog("verbose", `Tokenizing HTML ({#html} chars)`, "HTMLParser")
 	local tokens = {}
 	local pos = 1
 	local htmlLength = #html
@@ -62,14 +76,17 @@ local function tokenize(html)
 				-- Skip comment
 				local commentEnd = string.find(html, "-->", pos + 4)
 				if commentEnd then
+					debugLog("verbose", "Skipping HTML comment", "HTMLParser")
 					pos = commentEnd + 3
 				else
+					debugLog("warn", "Unclosed HTML comment", "HTMLParser")
 					pos = htmlLength + 1
 				end
 			elseif string.sub(html, pos, pos + 8) == "<!DOCTYPE" then
 				-- Skip doctype
 				local gtPos = string.find(html, ">", pos)
 				if gtPos then
+					debugLog("verbose", "Skipping DOCTYPE declaration", "HTMLParser")
 					pos = gtPos + 1
 				else
 					pos = htmlLength + 1
@@ -78,6 +95,7 @@ local function tokenize(html)
 				-- Find end of tag
 				local close = string.find(html, ">", pos)
 				if not close then
+					debugLog("warn", "Unclosed tag at position " .. pos, "HTMLParser")
 					break
 				end
 				local tagContent = string.sub(html, pos + 1, close - 1)
@@ -94,6 +112,8 @@ local function tokenize(html)
 			pos = nextTag
 		end
 	end
+
+	debugLog("log", `Tokenized: {#tokens} tokens`, "HTMLParser")
 	return tokens
 end
 
@@ -124,6 +144,7 @@ end
 
 -- Parser: converts tokens into a DOM tree
 function HTMLParser.parse(html)
+	debugLog("log", `Parsing HTML ({#html} chars)`, "HTMLParser")
 	local tokens = tokenize(html)
 	local stack = {}
 	local root = ElementNode("html") -- Root node
@@ -139,6 +160,7 @@ function HTMLParser.parse(html)
 				local parent = stack[#stack]
 				if parent then
 					table.insert(parent.children, TextNode(trimmed))
+					debugLog("verbose", `Added text node to {parent.tag}`, "HTMLParser")
 				end
 			end
 		elseif token.type == "tag" then
@@ -154,6 +176,7 @@ function HTMLParser.parse(html)
 						local cssText = extractText(styleNode)
 						if cssText and cssText ~= "" then
 							table.insert(cssBlocks, cssText)
+							debugLog("log", "Extracted CSS from <style> tag", "HTMLParser")
 						end
 					end
 
@@ -162,8 +185,10 @@ function HTMLParser.parse(html)
 						local top = stack[#stack]
 						if top.tag == closingTag then
 							table.remove(stack)
+							debugLog("verbose", `Closed tag: {closingTag}`, "HTMLParser")
 							break
 						else
+							debugLog("warn", `Mismatched tag: expected {closingTag}, got {top.tag}`, "HTMLParser")
 							table.remove(stack)
 						end
 					end
@@ -195,9 +220,13 @@ function HTMLParser.parse(html)
 					table.insert(root.children, node)
 				end
 
+				debugLog("verbose", `Opened tag: {tagName}`, "HTMLParser")
+
 				-- Push to stack if not self-closing
 				if not isSelfClosingTag and not isSelfClosing(tagName) then
 					table.insert(stack, node)
+				else
+					debugLog("verbose", `{tagName} is self-closing, not pushing to stack`, "HTMLParser")
 				end
 			end
 		end
@@ -206,13 +235,16 @@ function HTMLParser.parse(html)
 	-- Attach collected CSS to root node
 	if #cssBlocks > 0 then
 		root.css = table.concat(cssBlocks, "\n")
+		debugLog("log", `Attached {cssBlocks} CSS blocks to root`, "HTMLParser")
 	end
 
+	debugLog("log", `Parse complete: root has {#root.children} children`, "HTMLParser")
 	return root
 end
 
 -- Serialize DOM back to HTML (for debugging)
 function HTMLParser.serialize(node, indent)
+	debugLog("verbose", `Serializing node: type={node.type}, tag={node.tag or "N/A"}`, "HTMLParser")
 	indent = indent or 0
 	local pad = string.rep("  ", indent)
 

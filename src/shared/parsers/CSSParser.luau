@@ -9,12 +9,25 @@
 
 local CSSParser = {}
 
+-- Safe debug module loader
+local Debug = nil
+pcall(function()
+	Debug = require(script.Parent.Parent:WaitForChild("debug"))
+end)
+
+local function debugLog(level, message, source)
+	if Debug then
+		Debug[level](message, source or "CSSParser")
+	end
+end
+
 -- Parse a single CSS rule
 local function parseRule(cssText)
 	local rules = {}
 
 	-- Remove comments
 	cssText = cssText:gsub("/%*.-%*/", "")
+	debugLog("verbose", "Removed CSS comments", "CSSParser")
 
 	-- Find all rule blocks
 	for selectorStr, body in cssText:gmatch("([^{]+)%s*{([^}]+)}") do
@@ -42,14 +55,17 @@ local function parseRule(cssText)
 
 		if #rule.selectors > 0 then
 			table.insert(rules, rule)
+			debugLog("verbose", `Parsed rule with {selectorStr} selectors`, "CSSParser")
 		end
 	end
 
+	debugLog("log", `parseRule: found {rules} rules`, "CSSParser")
 	return rules
 end
 
 -- Parse full CSS and return a lookup table
 function CSSParser.parse(cssText)
+	debugLog("log", `Parsing CSS ({#cssText} chars)`, "CSSParser")
 	local rules = parseRule(cssText)
 	local styleMap = {}
 
@@ -65,16 +81,19 @@ function CSSParser.parse(cssText)
 		end
 	end
 
+	debugLog("log", `CSS parsed: {pairs(styleMap) and "selectors matched" or "no selectors"}`, "CSSParser")
 	return styleMap
 end
 
 -- Match a DOM element against CSS selectors
 function CSSParser.matchElement(element, styleMap)
 	if not element or element.type ~= "element" then
+		debugLog("verbose", "matchElement: not an element node, skipping", "CSSParser")
 		return {}
 	end
 
 	local styles = {}
+	debugLog("verbose", `matchElement: matching tag={element.tag}`, "CSSParser")
 
 	-- Tag selector (e.g., "div")
 	local tagStyles = styleMap[element.tag]
@@ -82,6 +101,7 @@ function CSSParser.matchElement(element, styleMap)
 		for prop, value in pairs(tagStyles) do
 			styles[prop] = value
 		end
+		debugLog("verbose", `Matched tag selector: {element.tag}`, "CSSParser")
 	end
 
 	-- Class selector (e.g., ".myclass")
@@ -93,6 +113,7 @@ function CSSParser.matchElement(element, styleMap)
 				for prop, value in pairs(classStyles) do
 					styles[prop] = value
 				end
+				debugLog("verbose", `Matched class selector: .{className}`, "CSSParser")
 			end
 		end
 	end
@@ -105,9 +126,11 @@ function CSSParser.matchElement(element, styleMap)
 			for prop, value in pairs(idStyles) do
 				styles[prop] = value
 			end
+			debugLog("verbose", `Matched ID selector: #{id}`, "CSSParser")
 		end
 	end
 
+	debugLog("verbose", `matchElement: returning {pairs(styles) and "styles" or "no styles"}`, "CSSParser")
 	return styles
 end
 

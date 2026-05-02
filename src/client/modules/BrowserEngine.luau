@@ -13,6 +13,28 @@ end
 
 local CSSParser = loadModule("CSSParser")
 
+-- Load debug module
+local function safeRequire(path)
+	local success, result = pcall(function()
+		return require(path)
+	end)
+	if success then
+		return result
+	end
+	return nil
+end
+
+local Debug = safeRequire(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("debug"))
+
+-- Helper to log with fallback
+local function debugLog(level, message, source)
+	if Debug then
+		Debug[level](message, source or "BrowserEngine")
+	else
+		print(`[BrowserEngine] {message}`)
+	end
+end
+
 BrowserEngine.onNavigate = nil
 BrowserEngine.onFormSubmit = nil
 
@@ -23,6 +45,8 @@ local function applySingleStyle(instance, prop, val)
 	prop = prop:lower()
 	val = val:lower()
 
+	debugLog("verbose", `Applying style: {prop}={val} to {instance.ClassName}`, "BrowserEngine")
+
 	if prop == "background-color" then
 		local ok, color = pcall(function()
 			return Color3.fromHex(val)
@@ -30,6 +54,8 @@ local function applySingleStyle(instance, prop, val)
 		if ok then
 			instance.BackgroundColor3 = color
 			instance.BackgroundTransparency = 0
+		else
+			debugLog("warn", `Invalid background-color value: {val}`, "BrowserEngine")
 		end
 	elseif prop == "color" then
 		local ok, color = pcall(function()
@@ -37,11 +63,15 @@ local function applySingleStyle(instance, prop, val)
 		end)
 		if ok then
 			instance.TextColor3 = color
+		else
+			debugLog("warn", `Invalid color value: {val}`, "BrowserEngine")
 		end
 	elseif prop == "font-size" then
 		local num = tonumber(val:match("%d+"))
 		if num then
 			instance.TextSize = num
+		else
+			debugLog("warn", `Invalid font-size value: {val}`, "BrowserEngine")
 		end
 	elseif prop == "font-weight" and val == "bold" then
 		instance.Font = Enum.Font.SourceSansBold
@@ -70,6 +100,7 @@ end
 
 -- Apply styles to instance
 local function applyStyles(instance, attrs, cssStyles)
+	debugLog("verbose", `Applying styles to {instance.ClassName}`, "BrowserEngine")
 	if attrs and attrs.style then
 		for prop, val in attrs.style:gmatch("([%w%-]+):%s*([^;]+)") do
 			applySingleStyle(instance, prop:lower(), val)
@@ -85,9 +116,11 @@ local function applyStyles(instance, attrs, cssStyles)
 	if attrs then
 		if attrs.id then
 			instance.Name = attrs.id
+			debugLog("verbose", `Set instance name to ID: {attrs.id}`, "BrowserEngine")
 		end
 		if attrs.class then
 			instance:SetAttribute("Class", attrs.class)
+			debugLog("verbose", `Set class attribute: {attrs.class}`, "BrowserEngine")
 		end
 	end
 end
@@ -156,6 +189,7 @@ end
 
 -- Render a single DOM node
 local function renderNode(node, parent, yOffset, maxWidth, cssMap)
+	debugLog("verbose", `renderNode: type={node.type}, tag={node.tag or "N/A"}`, "BrowserEngine")
 	if node.type == "text" then
 		local txt = Instance.new("TextLabel")
 		txt.Text = node.text
@@ -168,6 +202,7 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		txt.Font = Enum.Font.SourceSans
 		txt.TextSize = 14
 		txt.Parent = parent
+		debugLog("verbose", `Created TextLabel for text node`, "BrowserEngine")
 		return txt, txt.Size.Y.Offset
 	elseif node.type == "element" then
 		local creator = creatorForTag(node.tag)
@@ -177,6 +212,7 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		local cssStyles = {}
 		if cssMap and node.tag then
 			cssStyles = CSSParser.matchElement(node, cssMap) or {}
+			debugLog("verbose", `Matched {node.tag} to {pairs(cssStyles) and "CSS styles" or "no CSS"}`, "BrowserEngine")
 		end
 
 		-- Apply styles
@@ -238,6 +274,7 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 						inst.Font = Enum.Font.SourceSans
 					end)
 					inst.MouseButton1Click:Connect(function()
+						debugLog("log", `Link clicked: {node.attrs.href}`, "BrowserEngine")
 						if BrowserEngine.onNavigate then
 							BrowserEngine.onNavigate(node.attrs.href)
 						end
@@ -249,6 +286,7 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 			local src = node.attrs.src or ""
 			if src ~= "" then
 				inst.Image = src
+				debugLog("verbose", `Set image source: {src}`, "BrowserEngine")
 			end
 			inst.Size = UDim2.new(0, 200, 0, 200)
 			inst.Position = UDim2.new(0, 10, 0, yOffset)
@@ -286,6 +324,7 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		end
 
 		inst.Parent = parent
+		debugLog("verbose", `Rendered {node.tag or "unknown"} element, height={height}`, "BrowserEngine")
 
 		-- Render children
 		local childYOffset = 0
@@ -419,17 +458,22 @@ end
 
 -- Public API: render
 function BrowserEngine.render(domRoot, targetGui)
+	debugLog("log", `Rendering DOM to {targetGui:GetFullName()}`, "BrowserEngine")
 	if not targetGui or not targetGui:IsA("ScreenGui") then
+		debugLog("error", "render: targetGui must be a ScreenGui instance", "BrowserEngine")
 		error("BrowserEngine.render: targetGui must be a ScreenGui instance")
 	end
 
 	targetGui:ClearAllChildren()
+	debugLog("verbose", "Cleared existing children from targetGui", "BrowserEngine")
 
 	-- Parse CSS from DOM
 	local cssMap = {}
 	if domRoot.css then
+		debugLog("log", "Found CSS in DOM, parsing...", "BrowserEngine")
 		cssMap = CSSParser.parse(domRoot.css)
 		currentCSS = cssMap
+		debugLog("verbose", `Parsed CSS with {pairs(cssMap) and "rules" or "no rules"}`, "BrowserEngine")
 	end
 
 	-- Main container
@@ -466,6 +510,7 @@ function BrowserEngine.render(domRoot, targetGui)
 		maxWidth = scrollFrame.AbsoluteSize.X - 20
 	end)
 
+	debugLog("log", `Rendering {#domRoot.children or 0} top-level nodes`, "BrowserEngine")
 	for _, child in ipairs(domRoot.children or {}) do
 		local _, height = renderNode(child, scrollFrame, yOffset, maxWidth, cssMap)
 		yOffset = yOffset + (height or 0)
@@ -473,6 +518,7 @@ function BrowserEngine.render(domRoot, targetGui)
 
 	-- Update canvas size
 	scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset + 20)
+	debugLog("verbose", `Canvas size updated, total height: {yOffset + 20}`, "BrowserEngine")
 
 	return {
 		MainFrame = mainFrame,
@@ -483,6 +529,7 @@ end
 
 -- Show loading state
 function BrowserEngine.showLoading(navBarElements)
+	debugLog("verbose", "Showing loading state", "BrowserEngine")
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Text = "Loading..."
 		navBarElements.LoadingLabel.Visible = true
@@ -491,6 +538,7 @@ end
 
 -- Hide loading state
 function BrowserEngine.hideLoading(navBarElements)
+	debugLog("verbose", "Hiding loading state", "BrowserEngine")
 	if navBarElements and navBarElements.LoadingLabel then
 		navBarElements.LoadingLabel.Visible = false
 	end
@@ -498,6 +546,7 @@ end
 
 -- Update address bar
 function BrowserEngine.updateAddress(navBarElements, url)
+	debugLog("verbose", `Updating address bar: {url}`, "BrowserEngine")
 	if navBarElements and navBarElements.AddressBar then
 		navBarElements.AddressBar.Text = url
 	end
