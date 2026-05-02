@@ -1,3 +1,4 @@
+--!strict
 --[[
   Updated client entry point – fetches HTML, parses it, and renders
   the DOM using the BrowserEngine we just added.
@@ -17,7 +18,7 @@ local function fetchHtml(url)
         return result
     else
         warn("Failed to fetch URL:", url, "error:", result)
-        return "<p>Failed to load page.</p>"
+        return "\u003cp\u003eFailed to load page.\u003c/p\u003e"
     end
 end
 
@@ -37,3 +38,4 @@ local function init()
 end
 
 init()
+

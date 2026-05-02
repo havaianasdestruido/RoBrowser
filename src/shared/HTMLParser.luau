@@ -1,3 +1,4 @@
+--!strict
 --[[
   Simple HTML parser for Roblox Luau.
   Parses a subset of HTML into a lightweight DOM structure.
@@ -50,16 +51,16 @@ local function tokenize(html)
     local pos = 1
     while pos <= #html do
         local char = html:sub(pos, pos)
-        if char == "<" then
+        if char == "\u003c" then
             -- find end of tag
-            local close = html:find(">", pos)
+            local close = html:find("\u003e", pos)
             if not close then break end
             local tagContent = html:sub(pos + 1, close - 1)
             table.insert(tokens, {type = "tag", content = tagContent})
             pos = close + 1
         else
-            -- text node until next '<'
-            local nextTag = html:find("<", pos) or (#html + 1)
+            -- text node until next '\u003c'
+            local nextTag = html:find("\u003c", pos) or (#html + 1)
             local text = html:sub(pos, nextTag - 1)
             table.insert(tokens, {type = "text", content = text})
             pos = nextTag

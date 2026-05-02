@@ -1,3 +1,4 @@
+--!strict
 --[[
   BrowserEngine – renders a lightweight DOM (produced by HTMLParser) into
   Roblox GUI objects (Frame, TextLabel, ImageLabel, etc.).
@@ -25,6 +26,8 @@ local function applyStyles(instance, attrs)
                 if num then instance.TextSize = num end
             elseif prop == "font-weight" and val == "bold" then
                 instance.Font = Enum.Font.SourceSansBold
+            elseif prop == "font-style" and val == "italic" then
+                instance.Font = Enum.Font.SourceSansItalic
             end
         end
     end
@@ -44,11 +47,21 @@ local tagMap = {
     h1 = function() return Instance.new("TextLabel") end,
     h2 = function() return Instance.new("TextLabel") end,
     h3 = function() return Instance.new("TextLabel") end,
+    h4 = function() return Instance.new("TextLabel") end,
+    h5 = function() return Instance.new("TextLabel") end,
+    h6 = function() return Instance.new("TextLabel") end,
     ul = function() return Instance.new("Frame") end,
     ol = function() return Instance.new("Frame") end,
     li = function() return Instance.new("TextLabel") end,
     strong = function() return Instance.new("TextLabel") end,
     em = function() return Instance.new("TextLabel") end,
+    pre = function() return Instance.new("TextLabel") end,
+    code = function() return Instance.new("TextLabel") end,
+    blockquote = function() return Instance.new("TextLabel") end,
+    table = function() return Instance.new("Frame") end,
+    tr = function() return Instance.new("Frame") end,
+    td = function() return Instance.new("TextLabel") end,
+    th = function() return Instance.new("TextLabel") end,
 }
 
 -- Render a single DOM node into a Roblox Instance
@@ -113,3 +126,4 @@ function BrowserEngine.render(domRoot, targetGui)
 end
 
 return BrowserEngine
+
