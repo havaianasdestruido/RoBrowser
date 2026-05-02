@@ -6,8 +6,9 @@
 ]]
 
 local HttpService = game:GetService("HttpService")
-local HTMLParser = require(script:FindFirstChild("../shared/HTMLParser.luau"))
-local BrowserEngine = require(script:FindFirstChild("BrowserEngine.luau"))
+local HTMLParser = game:GetService("ReplicatedStorage").Shared.HTMLParser
+	--require(script:FindFirstChild("../shared/HTMLParser.luau"))
+local BrowserEngine = require(script.BrowserEngine)
 
 -- Simple helper to fetch a page. In a real app you’d add error handling,
 -- caching, and user‑provided URLs.
@@ -19,7 +20,7 @@ local function fetchHtml(url)
         return result
     else
         warn("Failed to fetch URL:", url, "error:", result)
-        return "\u003cp\u003eFailed to load page.\u003c/p\u003e"
+        return "Failed to fetch URL:", url, "error:", result--"\u003cp\u003eFailed to load page.\u003c/p\u003e"
     end
 end
 
