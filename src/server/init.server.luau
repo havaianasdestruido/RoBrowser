@@ -34,7 +34,7 @@ end
 
 -- Verify HttpService is enabled (must be toggled in Game Settings > Security)
 if not HttpService.HttpEnabled then
-	debugLog("warn", "HttpService is disabled. Enable HTTP requests in game settings.")
+	debugLog("warn", "HttpService is disabled. Enable HTTP requests in game settings.", "Server")
 end
 
 -- Create RemoteFunction if it doesn't exist

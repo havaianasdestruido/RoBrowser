@@ -11,3 +11,5 @@ sourcemap.json
 *.zip
 selene
 stylua
+
+tools/
