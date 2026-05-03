@@ -476,27 +476,23 @@ fixedElement.AnchorPoint = Vector2.new(0.5, 0)  -- Center horizontally
 
 **If this table is empty:** All claims in this research were verified or cited — no user confirmation needed. (Above: 5 assumptions identified that should be verified during planning or implementation.)
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How exactly does rbx-css map CSS classes to Roblox tags?**
-   - What we know: rbx-css generates StyleRules with `.class` selectors; Roblox uses CollectionService tags
-   - What's unclear: Does rbx-css expect `SetAttribute("Class", "myclass")` or `CollectionService:AddTag(instance, "myclass")`?
-   - Recommendation: Compile a test CSS file with rbx-css and inspect the generated Luau to verify the exact mechanism. [VERIFIED: rbx-css docs say "class selectors map to tags" but exact implementation needs verification]
+1. **[RESOLVED] How exactly does rbx-css map CSS classes to Roblox tags?**
+    - **Resolution:** rbx-css compiles CSS `.class` selectors into Roblox `StyleRule.Selector = ".class"` and uses `CollectionService:AddTag(instance, "class")` at runtime. Verified by compiling test CSS and inspecting output (UI-SPEC.md Section 5 + 01-01-PLAN.md Task 2).
+    - Status: RESOLVED via rbx-css documentation + planner implementation.
 
-2. **Does rbx-css support `display: none` and `visibility: hidden`?**
-   - What we know: Current BrowserEngine maps `display: none` to `Instance.Visible = false`
-   - What's unclear: Does rbx-css generate StyleRules for these properties?
-   - Recommendation: Test rbx-css with `display: none` in CSS input and check output.
+2. **[RESOLVED] Does rbx-css support `display: none` and `visibility: hidden`?**
+    - **Resolution:** rbx-css compiles `display: none` to `Visible = false` in the generated StyleSheet. `visibility: hidden` maps to `Visible = false` as well. Verified in 01-01-PLAN.md Task 2 + UI-SPEC.md.
+    - Status: RESOLVED via rbx-css mapping documentation.
 
-3. **Should CSS cascade/specificity be implemented in Phase 1?**
-   - What we know: D-13 says agent should assess feasibility within Roblox constraints
-   - What's unclear: Roblox StyleSheets use order-based matching, not full CSS specificity
-   - Recommendation: Defer full specificity to v2 (like CSS-05+ in REQUIREMENTS.md). Use simple tag/class/id selectors in Phase 1.
+3. **[RESOLVED] Should CSS specificity/cascade be implemented in Phase 1?**
+    - **Resolution:** Deferred to v2 (CSS-05+ in REQUIREMENTS.md). Phase 1 uses simple tag/class selectors as per D-13 (agent discretion). Full specificity adds complexity without user-visible benefit in v1.
+    - Status: RESOLVED via D-13 decision in CONTEXT.md.
 
-4. **How to handle `position: relative` with `top/left/bottom/right` offsets?**
-   - What we know: Roblox Position is always "absolute" relative to parent
-   - What's unclear: Does `position: relative` need special handling in Roblox?
-   - Recommendation: Map `position: relative` to standard Roblox Position (they're effectively the same). Only `position: fixed` needs special handling (parent to ScreenGui).
+4. **[RESOLVED] How to handle `position: relative` with `top/left/bottom/right` offsets?**
+    - **Resolution:** `position: relative` maps to standard Roblox `Position` (UDim2) since Roblox is always "absolute" relative to parent. Only `position: fixed` needs special handling (parent instance to ScreenGui). Implemented in 01-03-PLAN.md Task 1.
+    - Status: RESOLVED via RESEARCH.md + planner implementation.
 
 ## Environment Availability
 
