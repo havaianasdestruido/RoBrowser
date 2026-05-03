@@ -99,33 +99,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CSS-01 | TBD | Pending |
-| CSS-02 | TBD | Pending |
-| CSS-03 | TBD | Pending |
-| CSS-04 | TBD | Pending |
-| JS-01 | TBD | Pending |
-| JS-02 | TBD | Pending |
-| JS-03 | TBD | Pending |
-| DOM-01 | TBD | Pending |
-| DOM-02 | TBD | Pending |
-| DOM-03 | TBD | Pending |
-| DOM-04 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| PERF-04 | TBD | Pending |
-| REN-01 | TBD | Pending |
-| REN-02 | TBD | Pending |
-| REN-03 | TBD | Pending |
+| CSS-01 | Phase 1 | Pending |
+| CSS-02 | Phase 1 | Pending |
+| CSS-03 | Phase 1 | Pending |
+| CSS-04 | Phase 1 | Pending |
+| JS-01 | Phase 6 | Pending |
+| JS-02 | Phase 6 | Pending |
+| JS-03 | Phase 6 | Pending |
+| DOM-01 | Phase 2 | Pending |
+| DOM-02 | Phase 2 | Pending |
+| DOM-03 | Phase 3 | Pending |
+| DOM-04 | Phase 3 | Pending |
+| API-01 | Phase 4 | Pending |
+| API-02 | Phase 4 | Pending |
+| API-03 | Phase 5 | Pending |
+| PERF-01 | Phase 7 | Pending |
+| PERF-02 | Phase 8 | Pending |
+| PERF-03 | Phase 7 | Pending |
+| PERF-04 | Phase 8 | Pending |
+| REN-01 | Phase 9 | Pending |
+| REN-02 | Phase 1 | Pending |
+| REN-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 21 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21 ✓
+- Unmapped: 0 ✓
+- Coverage: 100% ✓
 
 ---
 *Requirements defined: 2026-05-03*
-*Last updated: 2026-05-03 after initial definition*
+*Last updated: 2026-05-03 after roadmap creation (coverage: 21/21 ✓)*
