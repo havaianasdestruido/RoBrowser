@@ -33,7 +33,15 @@
 4. User can see proper box model rendering (margin, padding, width, height, overflow: hidden/scroll/auto all work)
 5. CSS styles are applied via rbx-css compiled Roblox StyleSheets (replacing custom CSSParser), with native UIListLayout for Flexbox and UIGridLayout for Grid
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+**Plan list**:
+- [ ] 01-01-PLAN.md — Setup rbx-css build pipeline and StyleSheetLoader module
+- [ ] 01-02-PLAN.md — Create LayoutEngine with Flexbox (UIListLayout) and Grid (UIGridLayout)
+- [ ] 01-03-PLAN.md — Create PositioningEngine for CSS position/absolute/relative/fixed/z-index
+- [ ] 01-04-PLAN.md — Create BoxModelRenderer for width/height/padding/overflow
+- [ ] 01-05-PLAN.md — Refactor BrowserEngine to use StyleSheets and native layouts
+- [ ] 01-06-PLAN.md — Finalize with demo CSS, README docs, and Rojo mapping
 
 ---
 
