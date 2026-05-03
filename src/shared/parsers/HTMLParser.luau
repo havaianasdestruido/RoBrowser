@@ -210,23 +210,28 @@ function HTMLParser.parse(html)
 				local attrString = string.sub(content, #tagName + 1)
 				local attrs = parseAttributes(attrString)
 
-				-- Create node
+			-- Create node
 				local node = ElementNode(tagName, attrs)
 				local parent = stack[#stack]
 
-				if parent then
-					table.insert(parent.children, node)
+				-- Skip adding style tags to DOM (CSS is extracted separately)
+				if tagName ~= "style" then
+					if parent then
+						table.insert(parent.children, node)
+					end
+
+					debugLog("verbose", `Opened tag: {tagName}`, "HTMLParser")
+
+					-- Push to stack if not self-closing
+					if not isSelfClosingTag and not isSelfClosing(tagName) then
+						table.insert(stack, node)
+					else
+						debugLog("verbose", `{tagName} is self-closing, not pushing to stack`, "HTMLParser")
+					end
 				else
-					table.insert(root.children, node)
-				end
-
-				debugLog("verbose", `Opened tag: {tagName}`, "HTMLParser")
-
-				-- Push to stack if not self-closing
-				if not isSelfClosingTag and not isSelfClosing(tagName) then
+					debugLog("verbose", `Skipping style tag in DOM (CSS extracted separately)`, "HTMLParser")
+					-- Push style node to stack so we can extract CSS on close, but don't add to parent
 					table.insert(stack, node)
-				else
-					debugLog("verbose", `{tagName} is self-closing, not pushing to stack`, "HTMLParser")
 				end
 			end
 		end

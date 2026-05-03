@@ -13,3 +13,4 @@ selene
 stylua
 
 tools/
+#tools/**.**

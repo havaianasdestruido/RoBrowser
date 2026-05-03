@@ -127,18 +127,16 @@ end
 
 -- Tag categories
 local blockTags = {
-	"html", "head", "body", "div", "section", "article", "nav", "aside", "header", "footer", "main",
+	"html", "body", "div", "section", "article", "nav", "aside", "header", "footer", "main",
 	"ul", "ol", "li", "dl", "dt", "dd", "table", "thead", "tbody", "tfoot", "tr", "td", "th",
 	"form", "fieldset", "legend", "details", "summary", "figure", "figcaption", "blockquote", "pre", "canvas", "svg",
 	"math", "iframe", "video", "audio", "embed", "object",
-	"metadata", "title", "meta", "link", "style", "script", "noscript", "template", "slot",
 	"input", "button", "select", "option", "optgroup", "textarea", "label", "progress", "meter", "output",
 	"hr"
 }
 
 local inlineTextTags = {
 	"p", "span", "a", "b", "i", "strong", "em", "small", "sub", "sup", "mark", "abbr", "cite", "code", "kbd", "samp", "var", "del", "ins", "ruby", "rt", "rp", "q", "time", "u", "s", "strike", "bdi", "bdo",
-	"label", "legend", "summary",
 	"h1", "h2", "h3", "h4", "h5", "h6",
 	"pre", "blockquote", "figcaption"
 }
@@ -190,6 +188,12 @@ end
 -- Render a single DOM node
 local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 	debugLog("verbose", `renderNode: type={node.type}, tag={node.tag or "N/A"}`, "BrowserEngine")
+	-- Skip head element and its children (metadata, title, style, script, etc.)
+	if node.type == "element" and (node.tag == "head" or node.tag == "title" or node.tag == "meta" or node.tag == "link" or node.tag == "script" or node.tag == "noscript" or node.tag == "template" or node.tag == "slot") then
+		debugLog("verbose", `Skipping head/metadata tag: {node.tag}`, "BrowserEngine")
+		return nil, 0
+	end
+
 	if node.type == "text" then
 		local txt = Instance.new("TextLabel")
 		txt.Text = node.text
