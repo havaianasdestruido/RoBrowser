@@ -269,13 +269,15 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 					inst.BackgroundTransparency = 1
 					inst.TextColor3 = Color3.fromRGB(0, 102, 204)
 					inst.Font = Enum.Font.SourceSans
+					inst.TextStrokeTransparency = 1 -- not underlined by default
 					inst.MouseEnter:Connect(function()
 						inst.TextColor3 = Color3.fromRGB(204, 0, 0)
-						inst.Font = Enum.Font.SourceSansUnderline
+						inst.TextStrokeTransparency = 0 -- simulate underline with stroke
+						inst.TextStrokeColor3 = inst.TextColor3
 					end)
 					inst.MouseLeave:Connect(function()
 						inst.TextColor3 = Color3.fromRGB(0, 102, 204)
-						inst.Font = Enum.Font.SourceSans
+						inst.TextStrokeTransparency = 1
 					end)
 					inst.MouseButton1Click:Connect(function()
 						debugLog("log", `Link clicked: {node.attrs.href}`, "BrowserEngine")
@@ -328,9 +330,10 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		end
 
 		inst.Parent = parent
+		inst.Position = UDim2.new(0, 10, 0, yOffset)
 		debugLog("verbose", `Rendered {node.tag or "unknown"} element, height={height}`, "BrowserEngine")
 
-		-- Render children
+		-- Render children with accumulated yOffset
 		local childYOffset = 0
 		for _, child in ipairs(node.children or {}) do
 			local _, childHeight = renderNode(child, inst, childYOffset, maxWidth, cssMap)
@@ -338,11 +341,13 @@ local function renderNode(node, parent, yOffset, maxWidth, cssMap)
 		end
 
 		-- Update parent height for containers
+		local actualHeight = height
 		if inst:IsA("Frame") and not inst:IsA("ScrollingFrame") then
-			inst.Size = UDim2.new(inst.Size.X.Scale, inst.Size.X.Offset, 0, childYOffset + 10)
+			actualHeight = childYOffset + 10
+			inst.Size = UDim2.new(inst.Size.X.Scale, inst.Size.X.Offset, 0, actualHeight)
 		end
 
-		return inst, height
+		return inst, actualHeight
 	end
 	return nil, 0
 end
