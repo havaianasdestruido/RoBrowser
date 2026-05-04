@@ -29,6 +29,7 @@ local isNavigating = false
 local bookmarks = {
 	{title = "Wikipedia", url = "https://en.wikipedia.org/wiki/Main_Page"},
 	{title = "Google", url = "https://www.google.com"},
+	{title = "FrogFind!", url = "https://frogfind.com/"}
 }
 
 -- UI elements reference
