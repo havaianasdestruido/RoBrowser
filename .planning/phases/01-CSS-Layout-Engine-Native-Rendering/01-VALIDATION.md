@@ -2,7 +2,7 @@
 phase: 01
 slug: css-layout-engine-native-rendering
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-05-03
 ---
@@ -79,7 +79,7 @@ created: 2026-05-03
 
 - [ ] All tasks have `<automated>` verify or Wave 0 dependencies
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [x] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 600s
 - [ ] `nyquist_compliant: true` set in frontmatter

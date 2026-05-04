@@ -547,8 +547,8 @@ fixedElement.AnchorPoint = Vector2.new(0.5, 0)  -- Center horizontally
 
 ### Wave 0 Gaps
 
-- [ ] `tests/test_css_layout.luau` — covers CSS-01 through CSS-04 (not applicable yet — Luau has no standard test framework)
-- [ ] `tests/test_stylesheet.luau` — covers REN-02 (rbx-css compilation verification)
+- [x] `tests/test_css_layout.luau` — covers CSS-01 through CSS-04 (placeholder created)
+- [x] `tests/test_stylesheet.luau` — covers REN-02 (rbx-css compilation verification)
 - [ ] `tests/test_native_layout.luau` — covers REN-03 (UIListLayout/UIGridLayout verification)
 - [ ] Framework setup: Roblox has no standard test framework; may need to create simple `assert()` based tests or use a community framework
 - [ ] rbx-css output verification: Need to verify compiled StyleSheet.luau output matches expectations
