@@ -165,7 +165,7 @@ local function init()
 	end
 
 	-- Navigate to default homepage
-	local defaultUrl = "https://en.wikipedia.org/wiki/Main_Page"
+	local defaultUrl = "https://frogfind.com/"
 	Debug.log(`Navigating to default URL: {defaultUrl}`, "Client")
 	navigateToUrl(defaultUrl)
 end
