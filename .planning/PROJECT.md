@@ -18,17 +18,17 @@ Site rendering parity — any website loads and displays with correct layout and
 
 ### Active
 
-- [ ] **CSS-01**: CSS Flexbox layout support (display: flex, justify-content, align-items, etc.)
-- [ ] **CSS-02**: CSS Grid layout support (grid-template, grid-area, etc.)
-- [ ] **CSS-03**: Positioning system (position: absolute/relative/fixed, top, left, z-index)
-- [ ] **CSS-04**: Box model (margin, padding, width, height, overflow)
-- [ ] **DOM-01**: Basic DOM selection APIs (querySelector, getElementById, addEventListener)
-- [ ] **DOM-02**: DOM manipulation APIs (createElement, appendChild, removeChild, innerHTML)
-- [ ] **DOM-03**: Network request APIs (Fetch API, XMLHttpRequest basic support)
-- [ ] **JS-01**: Modern JS support (ES6+ features: arrow functions, promises, async/await)
-- [ ] **PERF-01**: Fast page load times for typical websites
-- [ ] **PERF-02**: Smooth 60fps interactions (scrolling, click/touch handling)
-- [ ] **API-01**: Web APIs: localStorage, WebSocket basic support
+- [x] **CSS-01**: CSS Flexbox layout support (display: flex, justify-content, align-items, etc.)
+- [x] **CSS-02**: CSS Grid layout support (grid-template, grid-area, etc.)
+- [x] **CSS-03**: Positioning system (position: absolute/relative/fixed, top, left, z-index)
+- [x] **CSS-04**: Box model (margin, padding, width, height, overflow)
+- [x] **DOM-01**: Basic DOM selection APIs (querySelector, getElementById, addEventListener)
+- [x] **DOM-02**: DOM manipulation APIs (createElement, appendChild, removeChild, innerHTML)
+- [x] **DOM-03**: Network request APIs (Fetch API, XMLHttpRequest basic support)
+- [x] **JS-01**: Modern JS support (ES6+ features: arrow functions, promises, async/await)
+- [x] **PERF-01**: Fast page load times for typical websites
+- [x] **PERF-02**: Smooth 60fps interactions (scrolling, click/touch handling)
+- [x] **API-01**: Web APIs: localStorage, WebSocket basic support
 
 ### Out of Scope
 

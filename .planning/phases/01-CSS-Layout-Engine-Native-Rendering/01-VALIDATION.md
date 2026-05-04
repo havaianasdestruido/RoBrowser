@@ -51,10 +51,10 @@ created: 2026-05-03
 
 ## Wave 0 Requirements
 
-- [ ] `selene src/` — linter passes (no errors)
-- [ ] `stylua --check src/` — formatter passes (no changes needed)
-- [ ] `npx rbx-css --check` — rbx-css config valid (if applicable)
-- [ ] Rojo build succeeds: `rojo build -o "robrowser.rbxlx"`
+- [x] `selene src/` — linter passes (no errors)
+- [x] `stylua --check src/` — formatter passes (no changes needed)
+- [x] `npx rbx-css --check` — rbx-css config valid (if applicable)
+- [x] Rojo build succeeds: `rojo build -o "robrowser.rbxlx"`
 
 *If none needed: "Existing infrastructure covers all phase requirements."*
 
@@ -77,11 +77,11 @@ created: 2026-05-03
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
 - [x] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 600s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] No watch-mode flags
+- [x] Feedback latency < 600s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** {pending / approved YYYY-MM-DD}

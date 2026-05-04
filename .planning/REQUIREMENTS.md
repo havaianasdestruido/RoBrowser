@@ -9,42 +9,42 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### CSS Layout
 
-- [ ] **CSS-01**: CSS Flexbox support (display: flex, justify-content, align-items, flex-direction, flex-wrap)
-- [ ] **CSS-02**: CSS Grid support (display: grid, grid-template-columns, grid-template-rows, grid-area, grid-gap)
-- [ ] **CSS-03**: Positioning system (position: absolute/relative/fixed, top, left, right, bottom, z-index)
-- [ ] **CSS-04**: Box model (margin, padding, width, height, overflow, box-sizing)
+- [x] **CSS-01**: CSS Flexbox support (display: flex, justify-content, align-items, flex-direction, flex-wrap)
+- [x] **CSS-02**: CSS Grid support (display: grid, grid-template-columns, grid-template-rows, grid-area, grid-gap)
+- [x] **CSS-03**: Positioning system (position: absolute/relative/fixed, top, left, right, bottom, z-index)
+- [x] **CSS-04**: Box model (margin, padding, width, height, overflow, box-sizing)
 
 ### JavaScript Engine
 
-- [ ] **JS-01**: ES5 subset support (functions, objects, arrays, basic syntax, eval restrictions)
-- [ ] **JS-02**: ES6+ basic features (arrow functions, let/const, template literals, destructuring)
-- [ ] **JS-03**: Promises and async/await support for asynchronous operations
+- [x] **JS-01**: ES5 subset support (functions, objects, arrays, basic syntax, eval restrictions)
+- [x] **JS-02**: ES6+ basic features (arrow functions, let/const, template literals, destructuring)
+- [x] **JS-03**: Promises and async/await support for asynchronous operations
 
 ### DOM APIs
 
-- [ ] **DOM-01**: Basic DOM selection (querySelector, querySelectorAll, getElementById, getElementsByClassName)
-- [ ] **DOM-02**: DOM manipulation (createElement, appendChild, removeChild, innerHTML, textContent)
-- [ ] **DOM-03**: Element properties (classList, attributes, dataset, style property access)
-- [ ] **DOM-04**: Event handling (addEventListener, removeEventListener, basic event types: click, scroll, load)
+- [x] **DOM-01**: Basic DOM selection (querySelector, querySelectorAll, getElementById, getElementsByClassName)
+- [x] **DOM-02**: DOM manipulation (createElement, appendChild, removeChild, innerHTML, textContent)
+- [x] **DOM-03**: Element properties (classList, attributes, dataset, style property access)
+- [x] **DOM-04**: Event handling (addEventListener, removeEventListener, basic event types: click, scroll, load)
 
 ### Web APIs
 
-- [ ] **API-01**: Fetch API basic support (GET/POST requests, response handling, JSON parsing)
-- [ ] **API-02**: localStorage basic support (getItem, setItem, removeItem)
-- [ ] **API-03**: WebSocket basic support (connect, send, onmessage, onopen, onclose)
+- [x] **API-01**: Fetch API basic support (GET/POST requests, response handling, JSON parsing)
+- [x] **API-02**: localStorage basic support (getItem, setItem, removeItem)
+- [x] **API-03**: WebSocket basic support (connect, send, onmessage, onopen, onclose)
 
 ### Performance
 
-- [ ] **PERF-01**: Fast page load times (target: <2.5s LCP for typical websites under 200K chars)
-- [ ] **PERF-02**: Smooth 60fps interactions (scrolling, click/touch handling without frame drops)
-- [ ] **PERF-03**: Incremental rendering for large pages (chunked rendering using task.defer() to avoid 10s timeout)
-- [ ] **PERF-04**: Instance pooling/recycling to stay under ~1000 GUI instances per page
+- [x] **PERF-01**: Fast page load times (target: <2.5s LCP for typical websites under 200K chars)
+- [x] **PERF-02**: Smooth 60fps interactions (scrolling, click/touch handling without frame drops)
+- [x] **PERF-03**: Incremental rendering for large pages (chunked rendering using task.defer() to avoid 10s timeout)
+- [x] **PERF-04**: Instance pooling/recycling to stay under ~1000 GUI instances per page
 
 ### Rendering
 
-- [ ] **REN-01**: HTML parsing and rendering via Roblox GUI objects (Frame, TextLabel, TextButton, ImageLabel)
-- [ ] **REN-02**: CSS styling applied via rbx-css compiled Roblox StyleSheets (replacing custom CSSParser)
-- [ ] **REN-03**: Native layout engines (UIListLayout for Flexbox, UIGridLayout for Grid) for performance
+- [x] **REN-01**: HTML parsing and rendering via Roblox GUI objects (Frame, TextLabel, TextButton, ImageLabel)
+- [x] **REN-02**: CSS styling applied via rbx-css compiled Roblox StyleSheets (replacing custom CSSParser)
+- [x] **REN-03**: Native layout engines (UIListLayout for Flexbox, UIGridLayout for Grid) for performance
 
 ## v2 Requirements
 

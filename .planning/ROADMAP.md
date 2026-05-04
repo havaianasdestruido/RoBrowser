@@ -7,15 +7,15 @@
 
 ## Phases
 
-- [ ] **Phase 1: CSS Layout Engine & Native Rendering** - CSS Flexbox, Grid, Positioning, Box Model + rbx-css integration + native layouts
-- [ ] **Phase 2: DOM Selection & Manipulation** - querySelector, getElementById, createElement, appendChild, removeChild, innerHTML
-- [ ] **Phase 3: DOM Properties & Events** - classList, attributes, dataset, style access, addEventListener, removeEventListener
-- [ ] **Phase 4: Web APIs - Network & Storage** - Fetch API (GET/POST), localStorage (getItem/setItem/removeItem)
-- [ ] **Phase 5: Web APIs - Real-time Communication** - WebSocket (connect, send, onmessage, onopen, onclose)
-- [ ] **Phase 6: JavaScript Engine** - ES5 subset, ES6+ features (arrow functions, let/const, template literals, destructuring), Promises, async/await
-- [ ] **Phase 7: Performance - Load Time** - Fast page load (<2.5s LCP), incremental rendering (chunked with task.defer())
-- [ ] **Phase 8: Performance - Runtime** - Smooth 60fps interactions, instance pooling/recycling (stay under ~1000 GUI instances)
-- [ ] **Phase 9: Integration & Validation** - HTML parsing/rendering validation, cross-phase integration testing
+- [x] **Phase 1: CSS Layout Engine & Native Rendering** - CSS Flexbox, Grid, Positioning, Box Model + rbx-css integration + native layouts
+- [x] **Phase 2: DOM Selection & Manipulation** - querySelector, getElementById, createElement, appendChild, removeChild, innerHTML
+- [x] **Phase 3: DOM Properties & Events** - classList, attributes, dataset, style access, addEventListener, removeEventListener
+- [x] **Phase 4: Web APIs - Network & Storage** - Fetch API (GET/POST), localStorage (getItem/setItem/removeItem)
+- [x] **Phase 5: Web APIs - Real-time Communication** - WebSocket (connect, send, onmessage, onopen, onclose)
+- [x] **Phase 6: JavaScript Engine** - ES5 subset, ES6+ features (arrow functions, let/const, template literals, destructuring), Promises, async/await
+- [x] **Phase 7: Performance - Load Time** - Fast page load (<2.5s LCP), incremental rendering (chunked with task.defer())
+- [x] **Phase 8: Performance - Runtime** - Smooth 60fps interactions, instance pooling/recycling (stay under ~1000 GUI instances)
+- [x] **Phase 9: Integration & Validation** - HTML parsing/rendering validation, cross-phase integration testing
 
 ## Phase Details
 
@@ -36,12 +36,12 @@
 **Plans**: 6 plans
 
 **Plan list**:
-- [ ] 01-01-PLAN.md — Setup rbx-css build pipeline and StyleSheetLoader module
-- [ ] 01-02-PLAN.md — Create LayoutEngine with Flexbox (UIListLayout) and Grid (UIGridLayout)
-- [ ] 01-03-PLAN.md — Create PositioningEngine for CSS position/absolute/relative/fixed/z-index
-- [ ] 01-04-PLAN.md — Create BoxModelRenderer for width/height/padding/overflow
-- [ ] 01-05-PLAN.md — Refactor BrowserEngine to use StyleSheets and native layouts
-- [ ] 01-06-PLAN.md — Finalize with demo CSS, README docs, and Rojo mapping
+- [x] 01-01-PLAN.md — Setup rbx-css build pipeline and StyleSheetLoader module
+- [x] 01-02-PLAN.md — Create LayoutEngine with Flexbox (UIListLayout) and Grid (UIGridLayout)
+- [x] 01-03-PLAN.md — Create PositioningEngine for CSS position/absolute/relative/fixed/z-index
+- [x] 01-04-PLAN.md — Create BoxModelRenderer for width/height/padding/overflow
+- [x] 01-05-PLAN.md — Refactor BrowserEngine to use StyleSheets and native layouts
+- [x] 01-06-PLAN.md — Finalize with demo CSS, README docs, and Rojo mapping
 
 ---
 

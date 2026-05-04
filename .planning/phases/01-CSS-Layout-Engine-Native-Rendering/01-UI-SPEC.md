@@ -200,12 +200,12 @@ Not applicable — rbx-css is a build-time CSS compiler (npm package), not a sha
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS (minimal copy, appropriate for rendering engine)
-- [ ] Dimension 2 Visuals: PASS (CSS→Roblox mapping contract defined)
-- [ ] Dimension 3 Color: PASS (browser chrome + rendered content colors defined)
-- [ ] Dimension 4 Typography: PASS (Roblox font mapping contract defined)
-- [ ] Dimension 5 Spacing: PASS (UDim2/pixel contract defined)
-- [ ] Dimension 6 Registry Safety: PASS (rbx-css is build tool, not registry component)
+- [x] Dimension 1 Copywriting: PASS (minimal copy, appropriate for rendering engine)
+- [x] Dimension 2 Visuals: PASS (CSS→Roblox mapping contract defined)
+- [x] Dimension 3 Color: PASS (browser chrome + rendered content colors defined)
+- [x] Dimension 4 Typography: PASS (Roblox font mapping contract defined)
+- [x] Dimension 5 Spacing: PASS (UDim2/pixel contract defined)
+- [x] Dimension 6 Registry Safety: PASS (rbx-css is build tool, not registry component)
 
 **Approval:** pending
 
