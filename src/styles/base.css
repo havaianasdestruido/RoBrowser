@@ -1,0 +1,75 @@
+/* base.css - Base element styles for robrowser */
+/* Per D-01: use rbx-css to compile CSS to Roblox StyleSheet instances */
+
+/* Body - matches Roblox ScreenGui background */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+  font-family: "SourceSans";
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+/* Block elements - map to Roblox Frame */
+div, section, article, header, footer, nav, main, aside {
+  display: block;
+}
+
+/* Text elements - map to Roblox TextLabel */
+p, span, a, strong, em, small, mark, code, label {
+  /* minimal styling - handled by TextLabel defaults */
+}
+
+/* Headings */
+h1 {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 16px 0;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+}
+
+h5 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+}
+
+h6 {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+}
+
+/* Links */
+a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #cc0000;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
