@@ -29,7 +29,8 @@ local isNavigating = false
 local bookmarks = {
 	{title = "Wikipedia", url = "https://en.wikipedia.org/wiki/Main_Page"},
 	{title = "Google", url = "https://www.google.com"},
-	{title = "FrogFind!", url = "https://frogfind.com/"}
+	{title = "FrogFind!", url = "https://frogfind.com/"},
+	{title = "Wiby", url = "https://wiby.me/"}
 }
 
 -- UI elements reference
@@ -165,7 +166,7 @@ local function init()
 	end
 
 	-- Navigate to default homepage
-	local defaultUrl = "https://frogfind.com/"
+	local defaultUrl = "https://wiby.me/"
 	Debug.log(`Navigating to default URL: {defaultUrl}`, "Client")
 	navigateToUrl(defaultUrl)
 end
