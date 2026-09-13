@@ -1,0 +1,213 @@
+# Automated PR labeling configuration for RoBrowser
+# Used with github-labeler action to automatically assign labels based on changed files
+
+# Language & Component Labels
+"lang:luau":
+  - changed-files:
+      - any-glob-to-any-file: "src/**/*.luau"
+
+"lang:css":
+  - changed-files:
+      - any-glob-to-any-file: "**/*.css"
+
+# Project Area Labels
+"area:parser":
+  - changed-files:
+      - any-glob-to-any-file: "src/shared/*parser*"
+      - any-glob-to-any-file: "src/shared/*html*"
+
+"area:css-engine":
+  - changed-files:
+      - any-glob-to-any-file: "src/shared/*css*"
+      - any-glob-to-any-file: "src/shared/*layout*"
+
+"area:js-engine":
+  - changed-files:
+      - any-glob-to-any-file: "src/shared/*js*"
+      - any-glob-to-any-file: "src/shared/*script*"
+
+"area:client":
+  - changed-files:
+      - any-glob-to-any-file: "src/client/**"
+
+"area:server":
+  - changed-files:
+      - any-glob-to-any-file: "src/server/**"
+
+"area:rendering":
+  - changed-files:
+      - any-glob-to-any-file: "src/client/*render*"
+      - any-glob-to-any-file: "src/client/*ui*"
+
+"area:shared":
+  - changed-files:
+      - any-glob-to-any-file: "src/shared/**"
+
+# Type Labels
+"type:bug":
+  - head-branch:
+      - "/^(bug|fix|hotfix)\\//i"
+
+"type:feature":
+  - head-branch:
+      - "/^(feature|feat)\\//i"
+
+"type:refactor":
+  - head-branch:
+      - "/^(refactor|refactoring)\\//i"
+
+"type:docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "documentation/**"
+          - "README.md"
+          - "**/*.md"
+          - ".github/**"
+
+"type:test":
+  - changed-files:
+      - any-glob-to-any-file: "**/__tests__/**"
+      - any-glob-to-any-file: "**/*.test.*"
+      - any-glob-to-any-file: "**/*.spec.*"
+
+"type:build":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "default.project.json"
+          - "rojo.toml"
+          - "aftman.toml"
+          - "stylua.toml"
+          - "selene.toml"
+          - "Makefile"
+          - "tools/**"
+
+"type:chore":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - ".gitignore"
+          - ".editorconfig"
+          - "sourcemap.json"
+
+# Priority Labels
+"priority:critical":
+  - head-branch:
+      - "/^(critical|emergency)\\//i"
+
+"priority:high":
+  - head-branch:
+      - "/^(high-priority|urgent)\\//i"
+
+# Size Labels
+"size:xs":
+  - changed-files:
+      - count: 1
+      - additions-count:
+          min: 0
+          max: 10
+      - deletions-count:
+          min: 0
+          max: 10
+
+"size:small":
+  - changed-files:
+      - count:
+          min: 1
+          max: 5
+      - additions-count:
+          min: 11
+          max: 50
+      - deletions-count:
+          min: 0
+          max: 50
+
+"size:medium":
+  - changed-files:
+      - count:
+          min: 1
+          max: 10
+      - additions-count:
+          min: 51
+          max: 250
+      - deletions-count:
+          min: 0
+          max: 250
+
+"size:large":
+  - changed-files:
+      - count:
+          min: 1
+          max: 25
+      - additions-count:
+          min: 251
+          max: 500
+      - deletions-count:
+          min: 0
+          max: 500
+
+"size:xl":
+  - changed-files:
+      - count:
+          min: 1
+      - additions-count:
+          min: 501
+      - deletions-count:
+          min: 0
+
+# GSD Workflow Labels
+"gsd:phase-1":
+  - head-branch:
+      - "/phase-1|phase1/i"
+
+"gsd:phase-2":
+  - head-branch:
+      - "/phase-2|phase2/i"
+
+"gsd:phase-3":
+  - head-branch:
+      - "/phase-3|phase3/i"
+
+"gsd:phase-4":
+  - head-branch:
+      - "/phase-4|phase4/i"
+
+"gsd:phase-5":
+  - head-branch:
+      - "/phase-5|phase5/i"
+
+"gsd:phase-6":
+  - head-branch:
+      - "/phase-6|phase6/i"
+
+"gsd:phase-7":
+  - head-branch:
+      - "/phase-7|phase7/i"
+
+"gsd:phase-8":
+  - head-branch:
+      - "/phase-8|phase8/i"
+
+"gsd:phase-9":
+  - head-branch:
+      - "/phase-9|phase9/i"
+
+# Status Labels
+"status:wip":
+  - head-branch:
+      - "/^wip\\//i"
+
+"status:needs-review":
+  - title-pattern: "^\\[REVIEW\\]"
+
+"status:needs-testing":
+  - title-pattern: "^\\[TEST\\]"
+
+# Example & Tools
+"example":
+  - changed-files:
+      - any-glob-to-any-file: "examples/**"
+
+"tools":
+  - changed-files:
+      - any-glob-to-any-file: "tools/**"
+      - any-glob-to-any-file: "utils/**"
